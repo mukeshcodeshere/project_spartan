@@ -1,4 +1,4 @@
-# 🚀 Project Spartan – Installation Guide
+# 🛢️ Project Spartan – Installation Guide
 
 This guide will walk you through setting up and running **Project Spartan** step-by-step.
 
@@ -110,7 +110,7 @@ There are two common issues you might encounter at this stage:
 
 #### 🔹 2. MV Server Issue
 
-* **What happens**: You entered valid credentials, but the login still fails due to a temporary issue on the MV server.
+* **What happens**: You entered valid credentials, but the login still fails due to a timeout issue on the MV server.
 * **Fix**: Wait **2–3 minutes** and try again. This issue usually resolves itself shortly.
 
 ---

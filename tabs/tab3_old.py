@@ -52,7 +52,7 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
         pivot = pivot.reindex(full_index)
 
         # Backward fill missing data
-        pivot = pivot.fillna(method='bfill')
+        pivot = pivot.bfill()
 
         return pivot
 
@@ -83,7 +83,7 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
         shifted_df = shifted_df.set_index('shifted_x')
         shifted_df = shifted_df.sort_index()
 
-        fig1, ax1 = plt.subplots(figsize=(7, 4))
+        fig1, ax1 = plt.subplots(figsize=(5, 3))
         for col in shifted_df.columns:
             ax1.plot(shifted_df.index, shifted_df[col], label=str(col))
 
@@ -127,7 +127,7 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
 
         if len(values) > 0:
             st.subheader("📊 Value Distribution")
-            fig2, ax2 = plt.subplots(figsize=(7, 4))
+            fig2, ax2 = plt.subplots(figsize=(5, 3))
             sns.histplot(values, kde=True, bins=30, ax=ax2, color='#F95D6A', edgecolor='white')
             ax2.set_title(f"{title} - Value Distribution")
             ax2.set_xlabel("Value")

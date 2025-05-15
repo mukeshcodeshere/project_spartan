@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
+from scipy.stats import gaussian_kde
+
 
 def render_tab3(merged_data, instruments, meta_A_month_int):
     st.markdown('<div class="section-header">📈 Trading Period Seasonal Analysis (Backward Fill)</div>', unsafe_allow_html=True)
@@ -70,6 +72,7 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
 
         start_day = month_ranges[starting_month][0]
 
+        # Shift day indices based on selected starting month
         shifted_x = []
         for day in df.index:
             if day >= start_day:
@@ -83,17 +86,24 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
         shifted_df = shifted_df.set_index('shifted_x')
         shifted_df = shifted_df.sort_index()
 
-        fig1, ax1 = plt.subplots(figsize=(5, 3))
+        # Create Plotly Line Chart
+        fig = go.Figure()
         for col in shifted_df.columns:
-            ax1.plot(shifted_df.index, shifted_df[col], label=str(col))
+            fig.add_trace(go.Scatter(
+                x=shifted_df.index,
+                y=shifted_df[col],
+                mode='lines',
+                name=str(col),
+                hovertemplate=f"Year: {col}<br>Day: %{{x}}<br>Value: %{{y:.2f}}<extra></extra>"
+            ))
 
+        # Set x-axis labels to months
         months = list(month_ranges.keys())
         start_month_idx = months.index(starting_month)
         shifted_month_order = months[start_month_idx:] + months[:start_month_idx]
 
         xticks = []
         xlabels = []
-        bold_labels = []
         current_month_abbr = month_int_to_abbr.get(datetime.now().month, None)
 
         for month in shifted_month_order:
@@ -102,38 +112,55 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
                 sx = original_start - start_day + 1
             else:
                 sx = (366 - start_day + 1) + original_start
+            xticks.append(sx)
+            xlabels.append(f"<b>{month}</b>" if month == current_month_abbr else month)
 
-            if sx in shifted_df.index:
-                xticks.append(sx)
-                xlabels.append(month)
-                bold_labels.append(month == current_month_abbr)
+        fig.update_layout(
+            title=title,
+            xaxis=dict(
+                tickmode='array',
+                tickvals=xticks,
+                ticktext=xlabels,
+                title='Month'
+            ),
+            yaxis_title='Value',
+            legend_title='Year',
+            height=400,
+            margin=dict(t=40, b=40),
+        )
 
-        ax1.set_xticks(xticks)
-        ax1.set_xticklabels(xlabels)
+        st.plotly_chart(fig, use_container_width=True)
 
-        for label, bold in zip(ax1.get_xticklabels(), bold_labels):
-            if bold:
-                label.set_fontweight('bold')
-
-        ax1.set_title(title)
-        ax1.set_xlabel("Month")
-        ax1.set_ylabel("Value")
-        ax1.legend(title="Year")
-        ax1.grid(True)
-        st.pyplot(fig1)
-
-        values = shifted_df.values.flatten()
+        # Distribution (KDE) plot using Plotly
+        values = shifted_df.dropna().values.flatten()
         values = values[~np.isnan(values)]
 
-        if len(values) > 0:
-            st.subheader("📊 Value Distribution")
-            fig2, ax2 = plt.subplots(figsize=(5, 3))
-            sns.histplot(values, kde=True, bins=30, ax=ax2, color='#F95D6A', edgecolor='white')
-            ax2.set_title(f"{title} - Value Distribution")
-            ax2.set_xlabel("Value")
-            ax2.set_ylabel("Frequency")
-            ax2.grid(True)
-            st.pyplot(fig2)
+        if len(values) > 1:
+            st.subheader("📈 Probability Density (KDE)")
+
+            kde = gaussian_kde(values)
+            x_vals = np.linspace(min(values), max(values), 500)
+            y_vals = kde(x_vals)
+
+            fig_kde = go.Figure()
+            fig_kde.add_trace(go.Scatter(
+                x=x_vals,
+                y=y_vals,
+                mode='lines',
+                fill='tozeroy',
+                line=dict(color='#F95D6A'),
+                hovertemplate="Value: %{x:.2f}<br>Density: %{y:.5f}<extra></extra>"
+            ))
+
+            fig_kde.update_layout(
+                title=f"{title} - Probability Density",
+                xaxis_title="Value",
+                yaxis_title="Density",
+                height=300,
+                margin=dict(t=40, b=40),
+            )
+
+            st.plotly_chart(fig_kde, use_container_width=True)
 
     all_tabs = instruments + ['Spread']
     tabs = st.tabs(all_tabs)

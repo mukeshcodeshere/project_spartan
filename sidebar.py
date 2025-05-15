@@ -40,61 +40,81 @@ def show_sidebar(commodity_categories):
             descriptions = [p['description'] for p in filtered_by_month]
             selected_desc = st.selectbox("Select Spread", descriptions)
             selected_preset = next((p['description'] for p in filtered_by_month if p['description'] == selected_desc), None)
-        else:
-            selected_preset = None
+            
+            # Return preset data immediately without showing user inputs
+            st.markdown("### 📅 Date Range")
+            col1, col2 = st.columns(2)
+            with col1:
+                start_date_input = st.date_input("Start date", value=date(2020, 1, 1), key="start_date")
+            with col2:
+                end_date_input = st.date_input("End date", value=date(2025, 12, 31), key="end_date")
 
-        st.markdown("### 🔍 User Inputs")
+            start_date = datetime.combine(start_date_input, datetime.min.time())
+            end_date = datetime.combine(end_date_input, datetime.min.time())
 
-        def select_multiple_commodities(group_name):
-            with st.expander(f"⚙️ Configure {group_name}", expanded=True):
-                category = st.selectbox(
-                    f"{group_name}: Exchange / Group",
-                    sorted(commodity_categories.keys()),
-                    key=f"{group_name}_category"
-                )
+            if start_date > end_date:
+                st.error("❌ Start date must be before end date.")
+                st.stop()
 
-                filtered_items = sorted(commodity_categories[category], key=lambda x: x[1])
-                symbol_options = [f"{desc} ({symbol})" for symbol, desc in filtered_items]
+            st.markdown("### ⚙️ Advanced Settings")
+            rolling_window = st.slider("Rolling Window Size", min_value=5, max_value=100, value=20, step=1)
+            var_confidence = st.slider("VaR Confidence Level (%)", min_value=90, max_value=99, value=95, step=1)
 
-                selected_labels = st.multiselect(
-                    f"{group_name}: Select Instruments",
-                    symbol_options,
-                    key=f"{group_name}_symbols"
-                )
+            # Return empty groups for preset mode
+            return [], [], start_date, end_date, rolling_window, var_confidence, 500, selected_preset, presets
 
-                group = []
-                if selected_labels:
-                    st.markdown("##### ⚖️ Weights & ⚙️ Conversions")
-                for label in selected_labels:
-                    for symbol, desc in filtered_items:
-                        if f"{desc} ({symbol})" == label:
-                            full_label = f"[{category}] {desc} ({symbol})"
-                            cols = st.columns([2, 1, 1])
-                            with cols[0]:
-                                st.markdown(f"**{desc} ({symbol})**")
-                            with cols[1]:
-                                weight = st.number_input(
-                                    "Weight", min_value=-10.0, value=1.0, step=0.1,
-                                    key=f"{group_name}_{symbol}_weight"
-                                )
-                            with cols[2]:
-                                conversion = st.number_input(
-                                    "Conversion", min_value=-10.0, value=1.0, step=0.1,
-                                    key=f"{group_name}_{symbol}_conversion"
-                                )
-                            group.append({
-                                "label": full_label,
-                                "symbol": symbol,
-                                "weight": weight,
-                                "conversion": conversion
-                            })
-                return group
+        else:  # Manual mode
+            st.markdown("### 🔍 User Inputs")
 
-        group_A = select_multiple_commodities("Group A")
-        group_B = select_multiple_commodities("Group B")
+            def select_multiple_commodities(group_name):
+                with st.expander(f"⚙️ Configure {group_name}", expanded=True):
+                    category = st.selectbox(
+                        f"{group_name}: Exchange / Group",
+                        sorted(commodity_categories.keys()),
+                        key=f"{group_name}_category"
+                    )
 
-        # ➕ New Manual Commodity Code Entry
-        if input_mode == "Manual":
+                    filtered_items = sorted(commodity_categories[category], key=lambda x: x[1])
+                    symbol_options = [f"{desc} ({symbol})" for symbol, desc in filtered_items]
+
+                    selected_labels = st.multiselect(
+                        f"{group_name}: Select Instruments",
+                        symbol_options,
+                        key=f"{group_name}_symbols"
+                    )
+
+                    group = []
+                    if selected_labels:
+                        st.markdown("##### ⚖️ Weights & ⚙️ Conversions")
+                    for label in selected_labels:
+                        for symbol, desc in filtered_items:
+                            if f"{desc} ({symbol})" == label:
+                                full_label = f"[{category}] {desc} ({symbol})"
+                                cols = st.columns([2, 1, 1])
+                                with cols[0]:
+                                    st.markdown(f"**{desc} ({symbol})**")
+                                with cols[1]:
+                                    weight = st.number_input(
+                                        "Weight", min_value=-10.0, value=1.0, step=0.1,
+                                        key=f"{group_name}_{symbol}_weight"
+                                    )
+                                with cols[2]:
+                                    conversion = st.number_input(
+                                        "Conversion", min_value=-10.0, value=1.0, step=0.1,
+                                        key=f"{group_name}_{symbol}_conversion"
+                                    )
+                                group.append({
+                                    "label": full_label,
+                                    "symbol": symbol,
+                                    "weight": weight,
+                                    "conversion": conversion
+                                })
+                    return group
+
+            group_A = select_multiple_commodities("Group A")
+            group_B = select_multiple_commodities("Group B")
+
+            # ➕ New Manual Commodity Code Entry
             st.markdown("### ⌨️ Enter Commodity Codes Directly")
             st.info("Format: `Symbol Weight Conversion` per line. Example: `#ICEGCMMK25 1.0 1.0`")
 
@@ -121,25 +141,25 @@ def show_sidebar(commodity_categories):
                 elif line.strip():
                     st.warning(f"Invalid format in line: `{line}`")
 
-        st.markdown("### 📅 Date Range")
-        col1, col2 = st.columns(2)
-        with col1:
-            start_date_input = st.date_input("Start date", value=date(2020, 1, 1), key="start_date")
-        with col2:
-            end_date_input = st.date_input("End date", value=date(2025, 12, 31), key="end_date")
+            st.markdown("### 📅 Date Range")
+            col1, col2 = st.columns(2)
+            with col1:
+                start_date_input = st.date_input("Start date", value=date(2020, 1, 1), key="start_date")
+            with col2:
+                end_date_input = st.date_input("End date", value=date(2025, 12, 31), key="end_date")
 
-        start_date = datetime.combine(start_date_input, datetime.min.time())
-        end_date = datetime.combine(end_date_input, datetime.min.time())
+            start_date = datetime.combine(start_date_input, datetime.min.time())
+            end_date = datetime.combine(end_date_input, datetime.min.time())
 
-        if start_date > end_date:
-            st.error("❌ Start date must be before end date.")
-            st.stop()
+            if start_date > end_date:
+                st.error("❌ Start date must be before end date.")
+                st.stop()
 
-        st.markdown("### ⚙️ Advanced Settings")
-        rolling_window = st.slider("Rolling Window Size", min_value=5, max_value=100, value=20, step=1)
-        var_confidence = st.slider("VaR Confidence Level (%)", min_value=90, max_value=99, value=95, step=1)
+            st.markdown("### ⚙️ Advanced Settings")
+            rolling_window = st.slider("Rolling Window Size", min_value=5, max_value=100, value=20, step=1)
+            var_confidence = st.slider("VaR Confidence Level (%)", min_value=90, max_value=99, value=95, step=1)
 
-        return group_A, group_B, start_date, end_date, rolling_window, var_confidence, 500, selected_preset, presets
+            return group_A, group_B, start_date, end_date, rolling_window, var_confidence, 500, selected_preset, presets
 
 # Enhanced color palette
 COLORS = {

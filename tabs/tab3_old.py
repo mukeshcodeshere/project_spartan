@@ -8,11 +8,6 @@ from scipy.stats import gaussian_kde
 
 def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instruments):
     st.markdown('<div class="section-header">📈 Trading Period Seasonal Analysis (Backward Fill)</div>', unsafe_allow_html=True)
-    st.write("=======================================")
-    st.write(instruments)
-    st.write(meta_A_month_int)
-    st.write(merged_data)
-    st.write("=======================================")
 
     merged_data['Date'] = pd.to_datetime(merged_data['Date'], errors='coerce')
     merged_data = merged_data.dropna(subset=['Date'])

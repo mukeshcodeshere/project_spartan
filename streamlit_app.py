@@ -162,6 +162,8 @@ merged_data, group_A_name, group_B_name,meta_A,meta_B = process_commodities_data
 
 meta_A_month_letter = meta_A[0][2][0]
 meta_A_month_int = futures_month_map.get(meta_A_month_letter.upper())
+list_of_input_instruments = [item[0] for item in (meta_A + meta_B)]
+st.write(list_of_input_instruments)
 
 # Handle the merged data
 if not merged_data.empty:
@@ -192,8 +194,7 @@ with tab2:
     render_tab2(tab2, merged_data, rolling_window, chart_height, COLORS, group_A_name, group_B_name)
 
 with tab3:
-    render_tab3(merged_data, [group_A_name, group_B_name],meta_A_month_int)
-
+    render_tab3(merged_data, [group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)
 
 with tab4:
     render_tab4(

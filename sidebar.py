@@ -50,7 +50,7 @@ def show_sidebar(commodity_categories):
             
             # Third level: Month combination selection
             month_display = {code: f"Contract: {code}" for code in month_codes}
-            selected_month_code = st.selectbox("Select Contract Month", options=month_codes, format_func=lambda x: month_display[x])
+            selected_month_code = st.selectbox("Select Contract Month-Month", options=month_codes, format_func=lambda x: month_display[x])
             
             # Filter by selected month code
             filtered_by_month = [p for p in filtered_by_region if p['months_code'] == selected_month_code]

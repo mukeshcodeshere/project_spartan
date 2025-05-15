@@ -100,7 +100,13 @@ You will be prompted to enter your **MV Username and Password**.
 
 ## ✅ Done!
 
-The application should now be up and running. Follow any additional instructions shown in the terminal.
+The application should now be up and running in your web browser.
+
+### To stop the application:
+
+* **Windows**: Open your Anaconda Prompt and press `Ctrl + C`.
+* **macOS**: Open your terminal and press `Cmd + C`.
 
 ---
 
+This format is more consistent and provides clearer instructions for both operating systems.

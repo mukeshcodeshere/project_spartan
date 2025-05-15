@@ -48,15 +48,15 @@ def process_commodities_data(group_A, group_B, start_date, end_date, available_c
             # Expiry logic
             contract_month, contract_year = symbol[-3:], "20" + symbol[-5:-3]
             data = check_expiry(data, contract_month, contract_year, symbol)
-            
+            # Appending logic - not going to do append because only needed during seasonality
             if not data.empty and 'expired' in data.columns and data.expired.unique() == 1:
                 next_symbol = get_next_commodity_symbol(symbol)
                 next_data = load_commodity_data(next_symbol, start_date, end_date)
                 if not next_data.empty:
                     next_data["Symbol"] = next_symbol
-                    data = append_new_after_old(data, next_data)
+                    data = data #append_new_after_old(data, next_data)
                     data["expired"] = data["expired"].fillna(0)
-                    st.info(f"Appended expired data for {label} with {next_symbol}")
+                    # st.info(f"Appended expired data for {label} with {next_symbol}")
 
             if not data.empty:
                 data = data[["Date", "Close"]].copy()

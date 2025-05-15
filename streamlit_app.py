@@ -159,11 +159,10 @@ merged_data, group_A_name, group_B_name,meta_A,meta_B = process_commodities_data
     {g["symbol"]: g["conversion"] for g in group_A}, 
     {g["symbol"]: g["conversion"] for g in group_B},  # Passing conversion values
 )
-
+# Benchmark is Group A's first instrument
 meta_A_month_letter = meta_A[0][2][0]
 meta_A_month_int = futures_month_map.get(meta_A_month_letter.upper())
 list_of_input_instruments = [item[0] for item in (meta_A + meta_B)]
-st.write(list_of_input_instruments)
 
 # Handle the merged data
 if not merged_data.empty:

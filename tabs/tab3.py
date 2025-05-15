@@ -5,21 +5,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from scipy.stats import gaussian_kde
-
+from data_engineering_tab3 import check_instrument_expiry
+# Benchmark is Group A's first instrument
 def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instruments):
     st.markdown('<div class="section-header">📈 Trading Period Seasonal Analysis (Backward Fill)</div>', unsafe_allow_html=True)
-    st.write("=======================================")
-    st.write(instruments)
-    st.write(meta_A_month_int)
-    st.write(merged_data)
-    st.write("=======================================")
-
-    merged_data['Date'] = pd.to_datetime(merged_data['Date'], errors='coerce')
-    merged_data = merged_data.dropna(subset=['Date'])
-    merged_data['DayOfYear'] = merged_data['Date'].dt.dayofyear
-    merged_data['Year'] = merged_data['Date'].dt.year
-
-    month_ranges = {
+    # PROBABLY NEED TO CHANGE BECAUSE 252 business days !! #TODO
+    month_ranges = { 
         "Jan": (1, 31), "Feb": (32, 59), "Mar": (60, 90), "Apr": (91, 120),
         "May": (121, 151), "Jun": (152, 181), "Jul": (182, 212), "Aug": (213, 243),
         "Sep": (244, 273), "Oct": (274, 304), "Nov": (305, 334), "Dec": (335, 366)
@@ -30,6 +21,22 @@ def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instrum
         5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
         9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
     }
+    st.write("=======================================")
+    st.write(list_of_input_instruments)
+    #st.write(merged_data)
+    
+    # Process the list and check expiry
+    instrument_expiry_check = check_instrument_expiry(list_of_input_instruments)
+    st.write(instrument_expiry_check)
+    # Print the result
+    for instrument, status in instrument_expiry_check:
+        st.write(f"{instrument}: {status}")
+    st.write("=======================================")
+
+    merged_data['Date'] = pd.to_datetime(merged_data['Date'], errors='coerce')
+    merged_data = merged_data.dropna(subset=['Date'])
+    merged_data['DayOfYear'] = merged_data['Date'].dt.dayofyear
+    merged_data['Year'] = merged_data['Date'].dt.year
 
     starting_month = month_int_to_abbr.get(meta_A_month_int, None)
     if starting_month is None:

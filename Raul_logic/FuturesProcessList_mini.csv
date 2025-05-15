@@ -1,8 +1,0 @@
-Type,SeriesName_1,SeriesName_2,SeriesName_3,SeriesName_4,NameOut_1,NameOut_2,NameOut_3,NameOut_4,Contract_1,Contract_2,Contract_3,Contract_4,YearsBack,ConversionFactor_1,ConversionFactor_2,ConversionFactor_3,ConversionFactor_4,ExpireFlag,LocationOut,UnitsOut
-Timing,CL,CL,,,CL,CL,,,F,G,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,G,H,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,H,J,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,J,K,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,K,M,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,M,N,,,10,1,1,,,CL,WTI,$/BBL
-Timing,CL,CL,,,CL,CL,,,N,Q,,,10,1,1,,,CL,WTI,$/BBL

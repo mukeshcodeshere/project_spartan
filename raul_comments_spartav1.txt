@@ -1,0 +1,67 @@
+Excel sheet ; n number of assets
+price
+conversion
+weight
+Month
+
+quarter input --> weight avg of V X Z
+[F F] [50 100] [1 1] [100 -100]
+Q4 Brent Dubai --> histogram
+
+Cal input F->Z 
+
+excel sheet inputs
+
+---------------------------------------
+ If the calculations (for N assets) are correct, then adjust the drop downs to fit the format provided in the excel sheet. This should also include the ability to do qtr and cal calculations 
+ 
+Then we need to start filling in the menu of pre-selected seasonal prices to calculate. One question is are we going to populate the database with history and update daily , or are we going to have the code grab the components of pre-selected items and calculate everything on the fly ? there are pros and cons to discuss there. 
+ 
+Once calculations, daily seasonal and daily histogram and drop downs are completed we can work on the pre-selected items - done
+
+seasonality - done
+
+------------------
+september vs august --done
+
+nymex & ice futures & ice swaps to futures dataset {symbols}
+brugerman dataset 
+
+swaps to futures *** gasoil futures ICE equivalent? --done?
+-----------------------
+
+dropdown logic
+
+seasonality calculations - must be right - start and end month of graph dependent on selection  - sept to august
+
+month selection - additional slider needed
+
+front leg - back leg--done
+
+
+when front expries , assume whole thing expires ; sept 25 - sept 26 ; --done
+
+sept 26 - sept 27 --done
+
+once sept 26 or july 26 expires, everything starts dropdown --done
+
+1st commodity must always expire first ; --done
+
+=@GvDescription("#ICEGCMMK25", C4, "daily", "2", "0", "", "", , "", , , , , , "HundredThousandths", , FALSE, ) --done
+
+
+----
+Before going to N assets
+seasonality fix
+qtr / cal calculations
+adjust dropdown
+then finally N assets
+
+--------------------
+import numpy as np
+PriceAnalyzerIn.csv ; presets -- done
+box spread ; fly spread, s
+
+--------------------
+HO Spread - seasonality spread - supposed to be from June to May ; add tooltip
+box spread ; fly spread,

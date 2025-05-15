@@ -5,7 +5,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from scipy.stats import gaussian_kde
-from data_engineering_tab3 import check_instrument_expiry
+from data_engineering import load_commodity_data
+from data_engineering_tab3 import check_instrument_expiry,generate_instrument_lists,concatenate_commodity_data_for_unique_instruments
+
 # Benchmark is Group A's first instrument
 def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instruments):
     st.markdown('<div class="section-header">📈 Trading Period Seasonal Analysis (Backward Fill)</div>', unsafe_allow_html=True)
@@ -22,15 +24,15 @@ def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instrum
         9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
     }
     st.write("=======================================")
-    st.write(list_of_input_instruments)
-    #st.write(merged_data)
-    
+
     # Process the list and check expiry
     instrument_expiry_check = check_instrument_expiry(list_of_input_instruments)
-    st.write(instrument_expiry_check)
-    # Print the result
-    for instrument, status in instrument_expiry_check:
-        st.write(f"{instrument}: {status}")
+
+    # Generate the new instrument lists based on expiry check
+    new_instrument_lists,unique_instruments = generate_instrument_lists(instrument_expiry_check)
+    st.write(unique_instruments)
+    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments)
+    st.write(df_final)
     st.write("=======================================")
 
     merged_data['Date'] = pd.to_datetime(merged_data['Date'], errors='coerce')

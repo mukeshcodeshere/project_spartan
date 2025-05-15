@@ -85,10 +85,13 @@ pip install -r requirements.txt
 ```
 
 ---
+Here's your updated section incorporating the extended and refined information:
+
+---
 
 ## ▶️ Step 7: Run the Application
 
-Finally, run the app with this command:
+To start the application, run the following command in your terminal:
 
 ```bash
 python run_app.py
@@ -96,19 +99,37 @@ python run_app.py
 
 You will be prompted to enter your **MV Username and Password**.
 
+### Possible Login Errors
+
+There are two common issues you might encounter at this stage:
+
+#### 🔹 1. Incorrect Credentials
+
+* **What happens**: The app prompts you to log in again.
+* **Fix**: Make sure you enter the correct username and password.
+
+#### 🔹 2. MV Server Issue
+
+* **What happens**: You entered valid credentials, but the login still fails due to a temporary issue on the MV server.
+* **Fix**: Wait **2–3 minutes** and try again. This issue usually resolves itself shortly.
+
 ---
 
 ## ✅ Done!
 
-The application should now be up and running in your web browser.
+Once login is successful, the application will automatically open in your **web browser**.
 
-### 🔴 To stop the application:
+---
 
-* **Windows**: In the Anaconda Prompt, press `Ctrl + C` to terminate the process.
-* **macOS/Linux**: In the Terminal, press `Cmd + C` to stop the application.
+### 🔴 To Stop the Application
+
+* **Windows**: In the Anaconda Prompt, press `Ctrl + C`
+* **macOS/Linux**: In the Terminal, press `Cmd + C`
 
 This will shut down the application.
 
 ---
 
-If you need help, approach the Analysts.
+If you need help, please reach out to the Analysts.
+
+---

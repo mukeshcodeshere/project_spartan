@@ -12,7 +12,10 @@ def load_presets_from_csv():
             'months': eval(row['contractMonthsList']),
             'weights': eval(row['weightsList']),
             'conversions': eval(row['convList']),
-            'description': row['desc']
+            'description': row['desc'],
+            'group': row['group'],
+            'region': row['region'],
+            'months_code': ''.join(eval(row['contractMonthsList']))  # Join month codes
         })
     return presets
 
@@ -21,16 +24,46 @@ def show_sidebar(commodity_categories):
         # New selection to toggle between presets and manual input
         input_mode = st.radio("Choose Input Mode", ["Preset", "Manual"])
 
+        presets = load_presets_from_csv()  # Load presets regardless of mode
+        selected_preset = None
+
         if input_mode == "Preset":
-            # Presets section
+            # Hierarchical preset selection
             st.markdown("### 📚 Presets")
-            presets = load_presets_from_csv()  # Presumably loads the presets from a CSV
-            preset_names = [p['description'] for p in presets]
-            selected_preset = st.selectbox("Choose a preset spread", preset_names)
+            
+            # Extract unique groups, regions, and month combinations
+            groups = sorted(set(p['group'] for p in presets))
+            
+            # First level: Group selection
+            selected_group = st.selectbox("Select Group", groups)
+            
+            # Filter by selected group
+            filtered_by_group = [p for p in presets if p['group'] == selected_group]
+            regions = sorted(set(p['region'] for p in filtered_by_group))
+            
+            # Second level: Region selection
+            selected_region = st.selectbox("Select Region", regions)
+            
+            # Filter by selected region
+            filtered_by_region = [p for p in filtered_by_group if p['region'] == selected_region]
+            month_codes = sorted(set(p['months_code'] for p in filtered_by_region))
+            
+            # Third level: Month combination selection
+            month_display = {code: f"Contract: {code}" for code in month_codes}
+            selected_month_code = st.selectbox("Select Contract Month-Month", options=month_codes, format_func=lambda x: month_display[x])
+            
+            # Filter by selected month code
+            filtered_by_month = [p for p in filtered_by_region if p['months_code'] == selected_month_code]
+            descriptions = [p['description'] for p in filtered_by_month]
+            
+            # Final level: Description selection
+            selected_desc = st.selectbox("Select Spread", descriptions)
+            
+            # Get the fully selected preset
+            selected_preset = next((p['description'] for p in filtered_by_month if p['description'] == selected_desc), None)
         else:
             # Manual input, so no preset is selected
             selected_preset = None
-            presets = []
 
         st.markdown("### 🔍 User Inputs")
 

@@ -2,11 +2,23 @@ import win32com.client
 import pythoncom
 import pandas as pd
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
 
-def connect_to_mv_com_server(server: str = "GCC025", password: str = "c58zYaAS"):
-    """Establish connection to MV COM server."""
+# Load environment variables from .env file
+load_dotenv("credential.env")
+
+def connect_to_mv_com_server():
+    """Establish connection to MV COM server using credentials from .env file."""
     try:
+        # Fetch credentials from environment variables
+        server = os.getenv("USERNAME_LOGIN")
+        password = os.getenv("PASSWORD_LOGIN")
+
+        if not server or not password:
+            raise ValueError("Credentials are missing in the environment file.")
+
         pythoncom.CoInitialize()
         con = win32com.client.Dispatch("Mv.Connectivity.ComClient.ServerConnection")
         con.Connect(server, password)
@@ -14,7 +26,6 @@ def connect_to_mv_com_server(server: str = "GCC025", password: str = "c58zYaAS")
     except Exception as e:
         print(f"Error connecting to MV COM server: {e}")
         return None
-
 
 def fetch_daily_data(con, symbol: str, start_date: datetime, end_date: datetime):
     """Fetch daily data for the given symbol and date range."""
@@ -82,3 +93,22 @@ def get_mv_data(symbol: str, start_date: datetime, end_date: datetime, inspect_f
         return df
     except Exception as e:
         raise RuntimeError(f"Failed to convert daily data to DataFrame: {e}")
+
+def test_auth_data_pull():
+    """Test pulling data for \GCL over a short time range."""
+    symbol = r"/GCL"  # raw string to handle backslash
+    end_date = datetime.now()
+    start_date = end_date.replace(day=max(7, end_date.day - 7))  # Just go 7 day back
+
+    try:
+        df = get_mv_data(symbol, start_date, end_date, inspect_first=True)
+        print("Data pulled successfully:")
+        print(df.head())
+        return "successful_login"  # Return successful login flag
+    except Exception as e:
+        print(f"Test data pull failed: {e}")
+        return "unsuccessful_login"  # Return unsuccessful login flag if data pull fails
+
+
+if __name__ == "__main__":
+    test_auth_data_pull()

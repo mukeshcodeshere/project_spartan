@@ -4,6 +4,17 @@ conversion
 weight
 Month
 
+def connect_to_mv_com_server(server: str = "GCC025", password: str = "c58zYaAS"):
+    """Establish connection to MV COM server."""
+    try:
+        pythoncom.CoInitialize()
+        con = win32com.client.Dispatch("Mv.Connectivity.ComClient.ServerConnection")
+        con.Connect(server, password)
+        return con
+    except Exception as e:
+        print(f"Error connecting to MV COM server: {e}")
+        return None
+
 quarter input --> weight avg of V X Z
 [F F] [50 100] [1 1] [100 -100]
 Q4 Brent Dubai --> histogram

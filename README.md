@@ -1,45 +1,93 @@
-# Project Spartan
+# 🚀 Project Spartan – Quick Start Guide
 
-Step-by-step guide to setting up and running **Project Spartan**.
-
-## 📦 Prerequisites
-
-* [Anaconda](https://www.anaconda.com/products/distribution) installed on your system.
+This guide will walk you through setting up and running **Project Spartan** step-by-step.
 
 ---
 
-## 🚀 Getting Started
+## 🛠 Prerequisites
 
-Follow these steps to set up the environment and run the application:
+Before you begin, make sure you have the following installed:
 
-### 1. Download and Install Anaconda
-
-Download the installer from the [official Anaconda website](https://www.anaconda.com/products/distribution) and install it following the instructions for your operating system.
-
----
-
-### 2. Open Anaconda Prompt
-
-After installation, open the **Anaconda Prompt** from your start menu (Windows) or terminal (macOS/Linux).
+* **[Git](https://git-scm.com/downloads)** – To download the project repository.
+* **[Anaconda](https://www.anaconda.com/products/distribution)** – For managing Python environments and dependencies.
 
 ---
 
-### 3. Create and Activate a New Environment
+## 📥 Step 1: Install Git
 
-In the Anaconda Prompt, run the following commands:
+1. Download Git from:
+   👉 [https://git-scm.com/downloads](https://git-scm.com/downloads)
+2. Follow the installation instructions for your operating system.
+
+---
+
+## 📥 Step 2: Install Anaconda
+
+1. Download Anaconda from:
+   👉 [https://www.anaconda.com/products/distribution](https://www.anaconda.com/products/distribution)
+2. Follow the instructions for your operating system to install it.
+
+---
+
+## 📁 Step 3: Navigate to Your Documents Folder
+
+Before cloning the repository, navigate to your **Documents** folder where you want to store the project.
+
+1. Open **Anaconda Prompt** (on Windows) or your **terminal** (on macOS/Linux).
+2. Run the following command to go to your Documents folder:
+
+   **For Windows:**
+
+   ```bash
+   cd %USERPROFILE%\Documents
+   ```
+
+   **For macOS/Linux:**
+
+   ```bash
+   cd ~/Documents
+   ```
+
+This ensures that the project is stored in your **Documents** folder.
+
+---
+
+## 📂 Step 4: Clone the Project Repository
+
+Now that you're in your **Documents** folder:
+
+1. Run the following command to clone the repository:
+
+   ```bash
+   git clone https://github.com/mukeshcodeshere/project_spartan.git
+   ```
+
+2. Navigate into the project folder:
+
+   ```bash
+   cd project_spartan
+   ```
+
+   The project will now be stored in your **Documents** folder, inside the `project_spartan` directory.
+
+---
+
+## 🐍 Step 5: Create & Activate Your Python Environment
+
+In Anaconda Prompt (or terminal), run these commands to create and activate a new environment:
 
 ```bash
-conda create --name work python=3.10
+conda create --name work python=3.13.2
 conda activate work
 ```
 
-> This creates and activates a new environment named `work`.
+This sets up a clean Python environment named `work`.
 
 ---
 
-### 4. Install Project Dependencies
+## 📦 Step 6: Install Project Dependencies
 
-Make sure you're in the project directory, then install the required packages:
+Make sure you're inside the `project_spartan` folder, then install the required dependencies by running:
 
 ```bash
 pip install -r requirements.txt
@@ -47,20 +95,21 @@ pip install -r requirements.txt
 
 ---
 
-### 5. Run the Application
+## ▶️ Step 7: Run the Application
 
-Once the environment is ready and dependencies are installed, run the application and enter your MV Username and Password:
+Finally, run the app with this command:
 
 ```bash
 python run_app.py
 ```
 
+You will be prompted to enter your **MV Username and Password**.
+
 ---
 
 ## ✅ Done!
 
-The application should now be running. Follow any additional instructions displayed in the terminal if applicable.
+The application should now be up and running. Follow any additional instructions shown in the terminal.
 
 ---
-
 

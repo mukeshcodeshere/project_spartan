@@ -1,5 +1,5 @@
-streamlit
-pandas
-python-dotenv
-win32com.client
-pythoncom
+pandas==2.2.3
+streamlit==1.45.0
+python-dotenv==1.1.0
+pywin32==307
+

@@ -110,7 +110,7 @@ st.markdown("""
     opacity: 1;
 }
 </style>
-<div class="big-title">📊 GCC Sparta </div>
+<div class="big-title">📊 Project Spartan </div>
 """, unsafe_allow_html=True)
 
 # Get the commodities

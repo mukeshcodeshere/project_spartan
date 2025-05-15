@@ -15,9 +15,9 @@ def create_or_update_env_file(username, password):
         # Write the credentials to the .env file
         with open("credential.env", "w") as f:
             f.write(env_content)
-        print("Your credentials have been saved in the .env file.")
+        print("Your credentials have been entered.")
     except Exception as e:
-        print(f"An error occurred while saving the credentials: {e}")
+        print(f"An error occurred while entering the credentials: {e}")
 
 def delete_env_file():
     """Delete the .env file."""

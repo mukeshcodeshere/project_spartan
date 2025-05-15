@@ -162,17 +162,12 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
 
             st.plotly_chart(fig_kde, use_container_width=True)
 
-    all_tabs = instruments + ['Spread']
+    # Make 'Spread' the first tab, followed by all instruments
+    all_tabs = ['Spread'] + instruments
     tabs = st.tabs(all_tabs)
 
-    for i, name in enumerate(instruments):
-        with tabs[i]:
-            st.subheader(f"{name} Seasonality")
-            pivot = prepare_seasonal_pivot(merged_data, name)
-            filtered = filter_pivot(pivot)
-            create_seasonal_plot(filtered, f"{name} Daily Seasonality")
-
-    with tabs[-1]:
+    # First tab: Spread
+    with tabs[0]:
         st.subheader("Spread Seasonality")
         if 'Spread' not in merged_data.columns:
             st.warning("No 'Spread' column found in data.")
@@ -180,3 +175,12 @@ def render_tab3(merged_data, instruments, meta_A_month_int):
         pivot = prepare_seasonal_pivot(merged_data, 'Spread')
         filtered = filter_pivot(pivot)
         create_seasonal_plot(filtered, "Spread Daily Seasonality")
+
+    # Other tabs: instruments
+    for i, name in enumerate(instruments):
+        with tabs[i + 1]:  # offset by 1 because Spread is now first
+            st.subheader(f"{name} Seasonality")
+            pivot = prepare_seasonal_pivot(merged_data, name)
+            filtered = filter_pivot(pivot)
+            create_seasonal_plot(filtered, f"{name} Daily Seasonality")
+

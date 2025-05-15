@@ -1,6 +1,9 @@
 import streamlit as st
 from datetime import datetime, date
 import pandas as pd
+from datetime import datetime
+
+current_year = int(datetime.now().year)
 
 def load_presets_from_csv():
     df = pd.read_csv("PriceAnalyzerIn.csv")
@@ -40,14 +43,13 @@ def show_sidebar(commodity_categories):
             descriptions = [p['description'] for p in filtered_by_month]
             selected_desc = st.selectbox("Select Spread", descriptions)
             selected_preset = next((p['description'] for p in filtered_by_month if p['description'] == selected_desc), None)
-            
-            # Return preset data immediately without showing user inputs
+
             st.markdown("### 📅 Date Range")
             col1, col2 = st.columns(2)
             with col1:
-                start_date_input = st.date_input("Start date", value=date(2020, 1, 1), key="start_date")
+                start_date_input = st.date_input("Start date", value=date(current_year-10, 1, 1), key="start_date")
             with col2:
-                end_date_input = st.date_input("End date", value=date(2025, 12, 31), key="end_date")
+                end_date_input = st.date_input("End date", value=date(current_year, 12, 31), key="end_date")
 
             start_date = datetime.combine(start_date_input, datetime.min.time())
             end_date = datetime.combine(end_date_input, datetime.min.time())
@@ -60,29 +62,24 @@ def show_sidebar(commodity_categories):
             rolling_window = st.slider("Rolling Window Size", min_value=5, max_value=100, value=20, step=1)
             var_confidence = st.slider("VaR Confidence Level (%)", min_value=90, max_value=99, value=95, step=1)
 
-            # Return empty groups for preset mode
             return [], [], start_date, end_date, rolling_window, var_confidence, 500, selected_preset, presets
 
-        else:  # Manual mode
-            st.markdown("### 🔍 User Inputs")
-
+        else:
+            st.markdown("### 🔍 Select Instruments (Optional)")
             def select_multiple_commodities(group_name):
-                with st.expander(f"⚙️ Configure {group_name}", expanded=True):
+                with st.expander(f"⚙️ Configure {group_name}", expanded=False):
                     category = st.selectbox(
                         f"{group_name}: Exchange / Group",
                         sorted(commodity_categories.keys()),
                         key=f"{group_name}_category"
                     )
-
                     filtered_items = sorted(commodity_categories[category], key=lambda x: x[1])
                     symbol_options = [f"{desc} ({symbol})" for symbol, desc in filtered_items]
-
                     selected_labels = st.multiselect(
                         f"{group_name}: Select Instruments",
                         symbol_options,
                         key=f"{group_name}_symbols"
                     )
-
                     group = []
                     if selected_labels:
                         st.markdown("##### ⚖️ Weights & ⚙️ Conversions")
@@ -94,15 +91,9 @@ def show_sidebar(commodity_categories):
                                 with cols[0]:
                                     st.markdown(f"**{desc} ({symbol})**")
                                 with cols[1]:
-                                    weight = st.number_input(
-                                        "Weight", min_value=-10.0, value=1.0, step=0.1,
-                                        key=f"{group_name}_{symbol}_weight"
-                                    )
+                                    weight = st.number_input("Weight", min_value=-10.0, value=1.0, step=0.1, key=f"{group_name}_{symbol}_weight")
                                 with cols[2]:
-                                    conversion = st.number_input(
-                                        "Conversion", min_value=-10.0, value=1.0, step=0.1,
-                                        key=f"{group_name}_{symbol}_conversion"
-                                    )
+                                    conversion = st.number_input("Conversion", min_value=-10.0, value=1.0, step=0.1, key=f"{group_name}_{symbol}_conversion")
                                 group.append({
                                     "label": full_label,
                                     "symbol": symbol,
@@ -114,37 +105,43 @@ def show_sidebar(commodity_categories):
             group_A = select_multiple_commodities("Group A")
             group_B = select_multiple_commodities("Group B")
 
-            # ➕ New Manual Commodity Code Entry
-            st.markdown("### ⌨️ Enter Commodity Codes Directly")
-            st.info("Format: `Symbol Weight Conversion` per line. Example: `#ICEGCMMK25 1.0 1.0`")
+            st.markdown("### 🧾 Add Instruments via Table")
+            st.info("Add instruments below. Use the 'Group' column to assign to Group A or B. Delete rows to remove.")
 
-            manual_group = st.radio("Apply manual entries to:", ["Group A", "Group B"], key="manual_group_choice")
-            manual_input = st.text_area("Commodity Codes Input", height=150, key="manual_code_input")
+            default_df = pd.DataFrame(columns=["Symbol", "Weight", "Conversion", "Group"])
+            instrument_df = st.data_editor(
+                default_df,
+                num_rows="dynamic",
+                use_container_width=True,
+                column_config={
+                    "Group": st.column_config.SelectboxColumn("Group", options=["Group A", "Group B"]),
+                    "Weight": st.column_config.NumberColumn("Weight", default=1.0, min_value=-10.0),
+                    "Conversion": st.column_config.NumberColumn("Conversion", default=1.0, min_value=-10.0),
+                }
+            )
 
-            manual_lines = manual_input.strip().split('\n')
-            for line in manual_lines:
-                parts = line.strip().split()
-                if len(parts) == 3:
-                    symbol, weight_str, conv_str = parts
-                    try:
-                        weight = float(weight_str)
-                        conversion = float(conv_str)
-                        group = group_A if manual_group == "Group A" else group_B
-                        group.append({
-                            "label": f"[Manual] {symbol}",
-                            "symbol": symbol,
-                            "weight": weight,
-                            "conversion": conversion
-                        })
-                    except ValueError:
-                        st.warning(f"Invalid number format in line: `{line}`")
-                elif line.strip():
-                    st.warning(f"Invalid format in line: `{line}`")
+            for idx in instrument_df.index:
+                if pd.isna(instrument_df.at[idx, "Symbol"]):
+                    continue
+                symbol = str(instrument_df.at[idx, "Symbol"])
+                weight = float(instrument_df.at[idx, "Weight"])
+                conversion = float(instrument_df.at[idx, "Conversion"])
+                group = instrument_df.at[idx, "Group"]
+                entry = {
+                    "label": f"[Manual] {symbol}",
+                    "symbol": symbol,
+                    "weight": weight,
+                    "conversion": conversion
+                }
+                if group == "Group A":
+                    group_A.append(entry)
+                else:
+                    group_B.append(entry)
 
             st.markdown("### 📅 Date Range")
             col1, col2 = st.columns(2)
             with col1:
-                start_date_input = st.date_input("Start date", value=date(2020, 1, 1), key="start_date")
+                start_date_input = st.date_input("Start date", value=date(2010, 1, 1), key="start_date")
             with col2:
                 end_date_input = st.date_input("End date", value=date(2025, 12, 31), key="end_date")
 
@@ -161,7 +158,6 @@ def show_sidebar(commodity_categories):
 
             return group_A, group_B, start_date, end_date, rolling_window, var_confidence, 500, selected_preset, presets
 
-# Enhanced color palette
 COLORS = {
     "commodity1": "#1f77b4",
     "commodity2": "#2ca02c",

@@ -160,13 +160,14 @@ merged_data, group_A_name, group_B_name,meta_A,meta_B = process_commodities_data
     {g["symbol"]: g["conversion"] for g in group_B},  # Passing conversion values
 )
 
-st.write(merged_data)
 meta_A_month_letter = meta_A[0][2][0]
 meta_A_month_int = futures_month_map.get(meta_A_month_letter.upper())
 
 # Handle the merged data
 if not merged_data.empty:
     st.info("Data is available for analysis.")
+    with st.expander("Click to view merged data", expanded=False):
+        st.dataframe(merged_data)
 else:
     st.warning("No data available for the selected commodities.")
 

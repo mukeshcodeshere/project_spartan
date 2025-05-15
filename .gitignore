@@ -1,2 +1,4 @@
 *.env
 raul_comments_spartav1.txt
+__pycache__/
+rahul_logic/

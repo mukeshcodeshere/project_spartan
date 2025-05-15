@@ -4,15 +4,6 @@ This guide will walk you through setting up and running **Project Spartan** step
 
 ---
 
-## 🛠 Prerequisites
-
-Before you begin, make sure you have the following installed:
-
-* **[Git](https://git-scm.com/downloads)** – To download the project repository.
-* **[Anaconda](https://www.anaconda.com/products/distribution)** – For managing Python environments and dependencies.
-
----
-
 ## 📥 Step 1: Install Git
 
 1. Download Git from:

@@ -108,5 +108,3 @@ The application should now be up and running in your web browser.
 * **macOS**: Open your terminal and press `Cmd + C`.
 
 ---
-
-This format is more consistent and provides clearer instructions for both operating systems.

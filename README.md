@@ -1,4 +1,4 @@
-# 🚀 Project Spartan – Quick Start Guide
+# 🚀 Project Spartan – Installation Guide
 
 This guide will walk you through setting up and running **Project Spartan** step-by-step.
 
@@ -16,7 +16,7 @@ This guide will walk you through setting up and running **Project Spartan** step
 
 1. Download Anaconda from:
    👉 [https://www.anaconda.com/products/distribution](https://www.anaconda.com/products/distribution)
-2. Follow the instructions for your operating system to install it.
+2. Follow the installation instructions for your operating system.
 
 ---
 
@@ -102,9 +102,13 @@ You will be prompted to enter your **MV Username and Password**.
 
 The application should now be up and running in your web browser.
 
-### To stop the application:
+### 🔴 To stop the application:
 
-* **Windows**: Open your Anaconda Prompt and press `Ctrl + C`.
-* **macOS**: Open your terminal and press `Cmd + C`.
+* **Windows**: In the Anaconda Prompt, press `Ctrl + C` to terminate the process.
+* **macOS/Linux**: In the Terminal, press `Cmd + C` to stop the application.
+
+This will shut down the application.
 
 ---
+
+If you need help, approach the Analysts.

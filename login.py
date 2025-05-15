@@ -4,8 +4,6 @@ def get_user_credentials():
     """Prompt the user to input their server and password."""
     server = input("Enter the username: ")
     password = input("Enter the password: ")
-    # print(server)
-    # print(password)
     return server, password
 
 def create_or_update_env_file(server, password):

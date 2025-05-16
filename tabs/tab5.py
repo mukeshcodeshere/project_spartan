@@ -23,7 +23,7 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
 
     # 2. Generate unique instruments and fetch data
     new_instrument_lists, unique_instruments = generate_instrument_lists(instrument_expiry_check)
-    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=5, retry_delay=5)
+    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=3, retry_delay=3)
     if df_final is None or df_final.empty:
         st.error("❌ Failed to retrieve commodity data.")
         return

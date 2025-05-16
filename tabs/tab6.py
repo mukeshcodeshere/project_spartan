@@ -89,8 +89,8 @@ def render_tab6(list_of_input_instruments):
 
             # Iterate over instrument pairs from the same year
             for base_instr, comp_instr in zip(base_instr_list, comp_instr_list):
-                df_base = concatenate_commodity_data_for_unique_instruments_mini([base_instr], max_retries=5, retry_delay=5)
-                df_comp = concatenate_commodity_data_for_unique_instruments_mini([comp_instr], max_retries=5, retry_delay=5)
+                df_base = concatenate_commodity_data_for_unique_instruments_mini([base_instr], max_retries=3, retry_delay=3)
+                df_comp = concatenate_commodity_data_for_unique_instruments_mini([comp_instr], max_retries=3, retry_delay=3)
 
                 # Skip if either is None or empty
                 if df_base is None or df_comp is None or df_base.empty or df_comp.empty:

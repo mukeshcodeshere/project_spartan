@@ -222,19 +222,40 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
     max_valid_date = df_valid['Date'].max()
     start_year = max_valid_date.year
     start_date = pd.Timestamp(year=start_year, month=meta_A_month_int, day=1)
+    previous_year_date = start_date - pd.DateOffset(years=1)
 
     def date_to_trading_index(date, start):
         days_diff = (date - start).days
         trading_index = days_diff * 5 / 7
         return trading_index
 
+    # Try to get valid data from the initial start_date
     valid_data = df_valid[df_valid['Date'] >= start_date].copy()
+    used_start_date = start_date
+
     if valid_data.empty:
-        st.write("No valid data after adjusted start date.")
+        # If no data, try from the previous year
+        valid_data = df_valid[df_valid['Date'] >= previous_year_date].copy()
+        used_start_date = previous_year_date
+
+        if valid_data.empty:
+            st.write("No valid data after adjusted start date.")
+        else:
+            for (instrument, year), group in valid_data.groupby(['Instrument', 'Year']):
+                group = group.sort_values('Date').copy()
+                group.loc[:, 'trading_day_index'] = group['Date'].apply(lambda d: date_to_trading_index(d, used_start_date))
+                fig.add_trace(go.Scatter(
+                    x=group['trading_day_index'],
+                    y=group['Close'],
+                    mode='lines',
+                    name=f"{instrument} - {year} (Valid)",
+                    line=dict(dash='solid', width=3, color=instrument_colors[instrument]),
+                    opacity=1
+                ))
     else:
         for (instrument, year), group in valid_data.groupby(['Instrument', 'Year']):
             group = group.sort_values('Date').copy()
-            group.loc[:, 'trading_day_index'] = group['Date'].apply(lambda d: date_to_trading_index(d, start_date))
+            group.loc[:, 'trading_day_index'] = group['Date'].apply(lambda d: date_to_trading_index(d, used_start_date))
             fig.add_trace(go.Scatter(
                 x=group['trading_day_index'],
                 y=group['Close'],
@@ -243,6 +264,7 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
                 line=dict(dash='solid', width=3, color=instrument_colors[instrument]),
                 opacity=1
             ))
+
 
     # Month ticks
     month_positions = [i * 21 for i in range(12)]

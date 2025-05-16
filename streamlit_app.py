@@ -213,4 +213,4 @@ with tab5:
     render_tab5(merged_data, [group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)
 
 with tab6:
-    render_tab6([group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)
+    render_tab6(list_of_input_instruments)

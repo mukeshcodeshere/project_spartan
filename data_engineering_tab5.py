@@ -147,6 +147,36 @@ def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_re
     df_final = pd.concat(fetched_data, ignore_index=True) if fetched_data else pd.DataFrame()
     return df_final
 
+@st.cache_data
+def concatenate_commodity_data_for_unique_instruments_mini(unique_instruments, max_retries=5, retry_delay=5):
+    fetched_data = []
+    failed_instruments = []
+
+    for idx, instrument in enumerate(unique_instruments, start=1):
+        success = False
+        for attempt in range(1, max_retries + 1):
+            try:
+                with st.spinner(f"Attempt {attempt}/{max_retries} - Fetching data for {instrument}..."):
+                    df_commodity_data = get_mv_data(instrument, start_date, end_date, False)
+
+                if df_commodity_data is not None and not df_commodity_data.empty:
+                    df_commodity_data['Instrument'] = instrument
+                    fetched_data.append(df_commodity_data)
+                    success = True
+                    break
+                else:
+                    print(f" No data returned for {instrument} on attempt {attempt}. Retrying...")
+            except Exception as e:
+                print(f" Error on attempt {attempt} for {instrument}: {e}")
+            
+            time.sleep(retry_delay)
+
+        if not success:
+            failed_instruments.append(instrument)
+
+    df_final = pd.concat(fetched_data, ignore_index=True) if fetched_data else pd.DataFrame()
+    return df_final
+
 def check_instrument_expiry_dict(instruments):
     instrument_status = []
     
@@ -281,93 +311,6 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
 
     st.plotly_chart(fig, use_container_width=True)
 
-def plot_seasonality_chart_tab6(df_filtered, meta_A_month_int):
-    import plotly.graph_objects as go
-    import pandas as pd
-    import streamlit as st
-    import itertools
-
-    df_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
-    df_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
-
-    fig = go.Figure()
-    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-    # Assign unique colors to instruments
-    color_cycle = itertools.cycle([
-        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
-        "#bcbd22", "#17becf"
-    ])
-    instrument_colors = {
-        instrument: next(color_cycle)
-        for instrument in df_filtered['Instrument'].unique()
-    }
-
-    def add_trace(group, label, dash_style, width, opacity):
-        fig.add_trace(go.Scatter(
-            x=group['trading_day_index'],
-            y=group['Close'],
-            mode='lines',
-            name=label,
-            line=dict(dash=dash_style, width=width, color=instrument_colors[group['Instrument'].iloc[0]]),
-            opacity=opacity
-        ))
-
-    # Plot expired instruments
-    for (instrument, year), group in df_expired.groupby(['Instrument', 'Year']):
-        group = group.sort_values('TradingDayOfYear').tail(252).reset_index(drop=True).copy()
-        group['trading_day_index'] = range(len(group))
-        label = f"{instrument} - {year} (Expired)"
-        add_trace(group, label, dash_style='dash', width=2, opacity=0.7)
-
-    if df_valid.empty:
-        st.write("No valid instruments found.")
-        return
-
-    max_valid_date = df_valid['Date'].max()
-    start_year = max_valid_date.year
-    start_date = pd.Timestamp(year=start_year, month=meta_A_month_int, day=1)
-    fallback_date = start_date - pd.DateOffset(years=1)
-
-    def compute_trading_index(date, base_date):
-        return (date - base_date).days * 5 / 7
-
-    valid_data = df_valid[df_valid['Date'] >= start_date].copy()
-    used_start_date = start_date
-
-    if valid_data.empty:
-        valid_data = df_valid[df_valid['Date'] >= fallback_date].copy()
-        used_start_date = fallback_date
-
-        if valid_data.empty:
-            st.write("No valid data after adjusted start date.")
-            return
-
-    for (instrument, year), group in valid_data.groupby(['Instrument', 'Year']):
-        group = group.sort_values('Date').copy()
-        group['trading_day_index'] = group['Date'].apply(lambda d: compute_trading_index(d, used_start_date))
-        label = f"{instrument} - {year} (Valid)"
-        add_trace(group, label, dash_style='solid', width=3, opacity=1)
-
-    month_positions = [i * 21 for i in range(12)]
-    month_labels = [month_names[(meta_A_month_int - 1 + i) % 12] for i in range(12)]
-
-    fig.update_layout(
-        title=f"📅 Seasonality Chart (Starting from {month_names[meta_A_month_int - 1]})",
-        xaxis=dict(title="Month", tickvals=month_positions, ticktext=month_labels),
-        yaxis_title="Close Price",
-        height=600,
-        template="plotly_white",
-        showlegend=True
-    )
-
-    # Generate a unique key from instruments and month
-    chart_key = f"seasonality_chart_{meta_A_month_int}_{'_'.join(sorted(df_filtered['Instrument'].unique()))}"
-    st.plotly_chart(fig, use_container_width=True, key=chart_key)
-
-
 # Function to check if a month code is expired or running based on the current month
 def check_month_status(month_code_map):
     current_month = datetime.now().month  # Get current month number
@@ -380,3 +323,57 @@ def check_month_status(month_code_map):
             status_dict[month_char] = 'running_month'  # Running if the month is after current
 
     return status_dict
+
+def plot_spread_seasonality(df_final, base_month_int):
+    import plotly.graph_objects as go
+    import pandas as pd
+    import streamlit as st
+
+    # Ensure proper types
+    df_final['Date'] = pd.to_datetime(df_final['Date'])
+
+    # Extract year from Base_Instrument (last 2 digits)
+    df_final['Year'] = df_final['Base_Instrument'].str.extract(r'(\d{2})$').astype(int) + 2000
+
+    # Sort for safety
+    df_final = df_final.sort_values(['Year', 'Date']).copy()
+
+    # Compute trading day index per year (1 to 252 max)
+    df_final['TradingDayOfYear'] = (
+        df_final.groupby(['Year'])
+        .cumcount() + 1
+    )
+
+    # Trim to max 252 trading days (1 year)
+    df_final = df_final[df_final['TradingDayOfYear'] <= 252]
+
+    # Plot
+    fig = go.Figure()
+
+    for year, group in df_final.groupby('Year'):
+        fig.add_trace(go.Scatter(
+            x=group['TradingDayOfYear'],
+            y=group['Spread'],
+            mode='lines',
+            name=str(year),
+            line=dict(width=2),
+            hovertext=group['Date'].dt.strftime('%Y-%m-%d'),
+            opacity=0.85
+        ))
+
+    # X-axis month ticks starting from meta_A_month_int
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    month_labels = [month_names[(base_month_int - 1 + i) % 12] for i in range(12)]
+    month_positions = [i * 21 for i in range(12)]  # ~21 trading days per month
+
+    fig.update_layout(
+        title=f"📊 Spread Seasonality Chart (Starting from {month_names[base_month_int - 1]})",
+        xaxis=dict(title="Month", tickvals=month_positions, ticktext=month_labels),
+        yaxis_title="Spread",
+        height=600,
+        template="plotly_white",
+        showlegend=True
+    )
+
+    st.plotly_chart(fig, use_container_width=True)

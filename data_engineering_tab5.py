@@ -124,9 +124,9 @@ def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_re
                     success = True
                     break
                 else:
-                    st.warning(f"⚠️ No data returned for {instrument} on attempt {attempt}. Retrying...")
+                    print(f" No data returned for {instrument} on attempt {attempt}. Retrying...")
             except Exception as e:
-                st.error(f"❌ Error on attempt {attempt} for {instrument}: {e}")
+                print(f" Error on attempt {attempt} for {instrument}: {e}")
             
             time.sleep(retry_delay)
 

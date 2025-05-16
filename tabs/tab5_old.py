@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-from data_engineering_tab5 import generate_instrument_lists,concatenate_commodity_data_for_unique_instruments,check_instrument_expiry_dict
+from data_engineering_tab5 import generate_instrument_lists,concatenate_commodity_data_for_unique_instruments,check_instrument_expiry_month_only,check_instrument_expiry_dict
 
 # Month character code mapping
 month_code_map = {
@@ -20,7 +20,7 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
     st.info("⏳ Aligns trading day number within each year for seasonal comparison. No averaging or aggregation applied.")
 
     # Step 1: Prepare instruments and data
-    instrument_expiry_check = check_instrument_expiry_dict(list_of_input_instruments)
+    instrument_expiry_check = check_instrument_expiry_month_only(list_of_input_instruments)
     expiry_status_dict = {inst: status for inst, status in instrument_expiry_check}
 
     new_instrument_lists, unique_instruments = generate_instrument_lists(instrument_expiry_check)
@@ -48,37 +48,188 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
         .groupby(['Instrument', 'Year'])
         .cumcount() + 1
     )
-
+    instrument_expiry_check_full = check_instrument_expiry_dict(unique_instruments)
+    expiry_status_dict = {inst: status for inst, status in instrument_expiry_check_full}
     # Add expiry status to each row
     df_filtered['ExpiryStatus'] = df_filtered['Instrument'].map(expiry_status_dict)
+
+    # Handle the merged data
+    if not df_filtered.empty:
+        st.info("Filtered is available for analysis.")
+        with st.expander("Click to view filtered data", expanded=False):
+            st.dataframe(df_filtered)
+    else:
+        st.warning("No data available for the selected commodities.")
 
     # Apply different filters for non-expired and expired items
     #first logic for only expired things
     df_filtered_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
     df_filtered_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
-    
-    # Create Instrument-Year label
-    df_filtered['Instrument_Year'] = df_filtered['Instrument'].astype(str) + " - " + df_filtered['Year'].astype(str)
 
-    # Plotting
+    ##########################################################
+    # THIS IS LOGIC For expired Instruments
+    # First, filter for expired instruments only
+    # df_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
+
+    # # Dictionary to hold the last 252 trading days for each expired instrument
+    # instrument_data = {}
+
+    # # Group by Instrument and Year
+    # for (instrument, year), group in df_expired.groupby(['Instrument', 'Year']):
+    #     # Sort by TradingDayOfYear to ensure chronological order
+    #     group = group.sort_values('TradingDayOfYear')
+        
+    #     # Take only the last 252 trading days (or all if less than 252)
+    #     last_252_days = group.tail(252)
+        
+    #     # Store in dictionary with proper identifier
+    #     key = f"{instrument} - {year}"
+    #     instrument_data[key] = last_252_days
+
+    # # Create a new figure
+    # fig = go.Figure()
+
+    # # Define month names for x-axis
+    # month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    # # Get meta_A_month_int (assuming it's available in your environment)
+    # # Function to convert trading day to month label, starting from meta_A_month_int
+    # def trading_day_to_month(day, total_days=252):
+    #     # Calculate approximate month (0-11)
+    #     month_fraction = day / total_days * 12
+    #     # Shift by meta_A_month_int - 1 (0-indexed)
+    #     shifted_month = (month_fraction + (meta_A_month_int - 1)) % 12
+    #     return int(shifted_month)
+
+    # # Plot each instrument
+    # for label, data in instrument_data.items():
+    #     # Reset the x-axis to be 0-based index of trading days
+    #     data = data.reset_index(drop=True)
+    #     data['trading_day_index'] = range(len(data))
+        
+    #     # Create month labels for the data
+    #     data['month'] = data['trading_day_index'].apply(lambda x: trading_day_to_month(x))
+        
+    #     fig.add_trace(go.Scatter(
+    #         x=data['trading_day_index'],
+    #         y=data['Close'],
+    #         mode='lines',
+    #         name=label
+    #     ))
+
+    # # Create custom x-axis ticks at month boundaries
+    # month_positions = []
+    # month_labels = []
+
+    # for i in range(12):
+    #     # Calculate position for each month (assuming equal distribution)
+    #     position = i * (252 / 12)
+    #     month_index = (i + meta_A_month_int - 1) % 12
+        
+    #     month_positions.append(position)
+    #     month_labels.append(month_names[month_index])
+
+    # # Update layout with custom x-axis ticks
+    # fig.update_layout(
+    #     title="Seasonality Chart for Expired Instruments (Last 252 Trading Days)",
+    #     xaxis=dict(
+    #         title="Month",
+    #         tickvals=month_positions,
+    #         ticktext=month_labels
+    #     ),
+    #     yaxis_title="Close Price",
+    #     height=600
+    # )
+
+    # st.plotly_chart(fig, use_container_width=True)
+    ##########################################################
+    # THIS IS LOGIC For valid Instruments
+    # Filter for valid instruments
+    df_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
+
+    # Assuming you have a Date column in your dataframe
+    # Convert it to datetime if it's not already
+    if not pd.api.types.is_datetime64_any_dtype(df_valid['Date']):
+        df_valid['Date'] = pd.to_datetime(df_valid['Date'])
+
+    # Get meta_A_month_int (assuming it's available in your environment)
+    current_year = df_valid['Date'].dt.year.max()  # Use current/latest year in data
+
+    # Create the start date for filtering: 1st day of meta_A_month_int month in the current year
+    start_date = pd.Timestamp(year=current_year, month=meta_A_month_int, day=1)
+
+    # Filter data to only include dates on or after the start date
+    df_valid_filtered = df_valid[df_valid['Date'] >= start_date]
+
+    # Group by Instrument and Year
+    valid_instrument_data = {}
+    for (instrument, year), group in df_valid_filtered.groupby(['Instrument', 'Year']):
+        # Sort by Date or TradingDayOfYear to ensure chronological order
+        group = group.sort_values('Date')
+        
+        # Store in dictionary with proper identifier
+        key = f"{instrument} - {year}"
+        valid_instrument_data[key] = group
+
+    # Create a new figure
     fig = go.Figure()
-    for label, group in df_filtered.groupby('Instrument_Year'):
-        expiry_status = group['ExpiryStatus'].iloc[0]
-        line_style = 'dash' if expiry_status == 'valid' else 'solid'
 
+    # Define month names for x-axis
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    # Function to convert date to normalized trading day index
+    # This will create a continuous x-axis starting from 0 at meta_A_month_int
+    def date_to_trading_index(date, start_date):
+        # Calculate days since start date, then convert to trading days (approx)
+        calendar_days = (date - start_date).days
+        # Approximate trading days (excluding weekends)
+        trading_days = calendar_days * 5/7  # 5 trading days per 7 calendar days
+        return trading_days
+
+    # Plot each valid instrument
+    for label, data in valid_instrument_data.items():
+        # Calculate trading day index for each date
+        data['trading_day_index'] = data['Date'].apply(
+            lambda date: date_to_trading_index(date, start_date)
+        )
+        
+        # Calculate month for each trading day
+        data['month'] = data['Date'].dt.month
+        
         fig.add_trace(go.Scatter(
-            x=group['TradingDayOfYear'],
-            y=group['Close'],
+            x=data['trading_day_index'],
+            y=data['Close'],
             mode='lines',
             name=label,
-            line=dict(dash=line_style)
+            line=dict(dash='dash')  # Use dashed line for valid instruments
         ))
 
+    # Calculate month positions for x-axis labels
+    # Assuming approximately 21 trading days per month
+    month_positions = []
+    month_labels = []
+
+    for i in range(12):
+        # Starting from meta_A_month_int
+        month_index = (meta_A_month_int - 1 + i) % 12
+        # Position based on trading days (approx 21 per month)
+        position = i * 21
+        
+        month_positions.append(position)
+        month_labels.append(month_names[month_index])
+
+    # Update layout with custom x-axis ticks
     fig.update_layout(
-        title="Seasonality Chart by Trading Day (Aligned by Year)",
-        xaxis_title="Trading Day of the Year",
+        title="Seasonality Chart for Valid Instruments (Starting from Month " + month_names[meta_A_month_int-1] + ")",
+        xaxis=dict(
+            title="Month",
+            tickvals=month_positions,
+            ticktext=month_labels
+        ),
         yaxis_title="Close Price",
         height=600
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+

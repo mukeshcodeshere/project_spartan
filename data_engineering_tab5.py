@@ -280,3 +280,103 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+def plot_seasonality_chart_tab6(df_filtered, meta_A_month_int):
+    import plotly.graph_objects as go
+    import pandas as pd
+    import streamlit as st
+    import itertools
+
+    df_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
+    df_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
+
+    fig = go.Figure()
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    # Assign unique colors to instruments
+    color_cycle = itertools.cycle([
+        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+        "#bcbd22", "#17becf"
+    ])
+    instrument_colors = {
+        instrument: next(color_cycle)
+        for instrument in df_filtered['Instrument'].unique()
+    }
+
+    def add_trace(group, label, dash_style, width, opacity):
+        fig.add_trace(go.Scatter(
+            x=group['trading_day_index'],
+            y=group['Close'],
+            mode='lines',
+            name=label,
+            line=dict(dash=dash_style, width=width, color=instrument_colors[group['Instrument'].iloc[0]]),
+            opacity=opacity
+        ))
+
+    # Plot expired instruments
+    for (instrument, year), group in df_expired.groupby(['Instrument', 'Year']):
+        group = group.sort_values('TradingDayOfYear').tail(252).reset_index(drop=True).copy()
+        group['trading_day_index'] = range(len(group))
+        label = f"{instrument} - {year} (Expired)"
+        add_trace(group, label, dash_style='dash', width=2, opacity=0.7)
+
+    if df_valid.empty:
+        st.write("No valid instruments found.")
+        return
+
+    max_valid_date = df_valid['Date'].max()
+    start_year = max_valid_date.year
+    start_date = pd.Timestamp(year=start_year, month=meta_A_month_int, day=1)
+    fallback_date = start_date - pd.DateOffset(years=1)
+
+    def compute_trading_index(date, base_date):
+        return (date - base_date).days * 5 / 7
+
+    valid_data = df_valid[df_valid['Date'] >= start_date].copy()
+    used_start_date = start_date
+
+    if valid_data.empty:
+        valid_data = df_valid[df_valid['Date'] >= fallback_date].copy()
+        used_start_date = fallback_date
+
+        if valid_data.empty:
+            st.write("No valid data after adjusted start date.")
+            return
+
+    for (instrument, year), group in valid_data.groupby(['Instrument', 'Year']):
+        group = group.sort_values('Date').copy()
+        group['trading_day_index'] = group['Date'].apply(lambda d: compute_trading_index(d, used_start_date))
+        label = f"{instrument} - {year} (Valid)"
+        add_trace(group, label, dash_style='solid', width=3, opacity=1)
+
+    month_positions = [i * 21 for i in range(12)]
+    month_labels = [month_names[(meta_A_month_int - 1 + i) % 12] for i in range(12)]
+
+    fig.update_layout(
+        title=f"📅 Seasonality Chart (Starting from {month_names[meta_A_month_int - 1]})",
+        xaxis=dict(title="Month", tickvals=month_positions, ticktext=month_labels),
+        yaxis_title="Close Price",
+        height=600,
+        template="plotly_white",
+        showlegend=True
+    )
+
+    # Generate a unique key from instruments and month
+    chart_key = f"seasonality_chart_{meta_A_month_int}_{'_'.join(sorted(df_filtered['Instrument'].unique()))}"
+    st.plotly_chart(fig, use_container_width=True, key=chart_key)
+
+
+# Function to check if a month code is expired or running based on the current month
+def check_month_status(month_code_map):
+    current_month = datetime.now().month  # Get current month number
+    status_dict = {}
+
+    for month_char, month_num in month_code_map.items():
+        if month_num <= current_month:
+            status_dict[month_char] = 'expired_month'  # Expired if the month is before or equal to current
+        else:
+            status_dict[month_char] = 'running_month'  # Running if the month is after current
+
+    return status_dict

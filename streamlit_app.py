@@ -13,6 +13,7 @@ from tabs.tab2 import render_tab2
 from tabs.tab3 import render_tab3
 from tabs.tab4 import render_tab4
 from tabs.tab5 import render_tab5
+from tabs.tab6 import render_tab6
 from sidebar import show_sidebar, COLORS
 from data_engineering import process_commodities_data,load_commodity_data
 
@@ -174,12 +175,13 @@ else:
     st.warning("No data available for the selected commodities.")
 
 # Create tabs for different analyses
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5,tab6 = st.tabs([
     "📊 Market Overview", 
     "🔄 Correlation Analysis", 
     "📈 Seasonal Patterns",
     "⚠️ Risk Metrics",
-    "🌦️ Raul Seasonality"  # New tab added
+    "🌦️ Raul-Seasonality-Flat",
+    "🌦️ Raul-Seasonality-Spreads"
 ])
 
 
@@ -209,3 +211,6 @@ with tab4:
 
 with tab5:
     render_tab5(merged_data, [group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)
+
+with tab6:
+    render_tab6([group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)

@@ -173,12 +173,14 @@ else:
     st.warning("No data available for the selected commodities.")
 
 # Create tabs for different analyses
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Market Overview", 
     "🔄 Correlation Analysis", 
     "📈 Seasonal Patterns",
-    "⚠️ Risk Metrics"
+    "⚠️ Risk Metrics",
+    "🌦️ Raul Seasonality"  # New tab added
 ])
+
 
 with tab1:
     render_tab1(
@@ -203,3 +205,6 @@ with tab4:
         var_confidence=var_confidence,
         COLORS=COLORS
     )
+
+with tab5:
+    render_tab5(merged_data, [group_A_name, group_B_name],meta_A_month_int,list_of_input_instruments)

@@ -5,9 +5,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from scipy.stats import gaussian_kde
+from data_engineering import load_commodity_data
+from data_engineering_tab5 import check_instrument_expiry,generate_instrument_lists,concatenate_commodity_data_for_unique_instruments
 
 # Benchmark is Group A's first instrument
-def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instruments):
+def render_tab5(merged_data, instruments, meta_A_month_int,list_of_input_instruments):
     st.markdown('<div class="section-header">📈 Trading Period Seasonal Analysis (Backward Fill)</div>', unsafe_allow_html=True)
     # PROBABLY NEED TO CHANGE BECAUSE 252 business days !! #TODO
     month_ranges = { 
@@ -21,6 +23,22 @@ def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instrum
         5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
         9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
     }
+    st.write("=======================================")
+
+    # Process the list and check expiry
+    instrument_expiry_check = check_instrument_expiry(list_of_input_instruments)
+
+    # Generate the new instrument lists based on expiry check
+    new_instrument_lists,unique_instruments = generate_instrument_lists(instrument_expiry_check)
+    st.write(unique_instruments)
+    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=5, retry_delay=5)
+    st.write(df_final)
+    df_final = df_final[['Instrument', 'Date', 'Close']]
+    # Sort by Instrument and Date (just to ensure order is correct)
+    df_final = df_final.sort_values(['Instrument', 'Date'])
+    # Group by Instrument and keep last 252 rows for each
+    df_seasonal = df_seasonal.groupby('Instrument').tail(252).reset_index(drop=True)
+    st.write("=======================================")
 
     merged_data['Date'] = pd.to_datetime(merged_data['Date'], errors='coerce')
     merged_data = merged_data.dropna(subset=['Date'])

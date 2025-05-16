@@ -102,24 +102,6 @@ def generate_instrument_lists(instrument_expiry_check):
 
     return new_instrument_lists,unique_instruments
 
-# @st.cache_data
-# def concatenate_commodity_data_for_unique_instruments(unique_instruments):
-#     # Create an empty DataFrame to store the final results
-#     df_final = pd.DataFrame()
-
-#     # Loop through each unique instrument and fetch its commodity data
-#     for instrument in unique_instruments:
-#         # Fetch the commodity data for the current instrument
-#         df_commodity_data = get_mv_data(instrument,start_date,end_date,False)
-
-#         # Add a column for the instrument symbol
-#         df_commodity_data['Instrument'] = instrument
-
-#         # Concatenate this instrument's data to the final DataFrame
-#         df_final = pd.concat([df_final, df_commodity_data], ignore_index=True)
-
-#     return df_final
-
 @st.cache_data
 def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=5, retry_delay=5):
     fetched_data = []

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import streamlit as st
 import time
 import plotly.graph_objects as go
+import plotly.express as px
 # Today's date
 end_date = datetime.today()
 
@@ -392,3 +393,115 @@ def plot_spread_seasonality(df_final, base_month_int,current_year):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+def plot_kde_distribution(df_final):
+    import numpy as np
+    import pandas as pd
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from scipy.stats import gaussian_kde, norm
+    import streamlit as st
+
+    # Extract spread data
+    spread_data = df_final['Spread'].dropna().values
+    mean_val = np.mean(spread_data)
+    median_val = np.median(spread_data)
+    std_dev = np.std(spread_data)
+    
+    # Confidence interval
+    z_score = norm.ppf(0.975)
+    ci_lower = mean_val - z_score * std_dev / np.sqrt(len(spread_data))
+    ci_upper = mean_val + z_score * std_dev / np.sqrt(len(spread_data))
+
+    # KDE
+    kde = gaussian_kde(spread_data)
+    x_range = np.linspace(min(spread_data), max(spread_data), 1000)
+    kde_values = kde(x_range)
+
+    # Subplots
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.7, 0.3], vertical_spacing=0.08)
+
+    # KDE + histogram
+    fig.add_trace(go.Histogram(
+        x=spread_data,
+        nbinsx=30,
+        histnorm='probability density',
+        marker_color='rgba(100, 100, 255, 0.3)',
+        opacity=0.6,
+        name='Histogram'
+    ), row=1, col=1)
+
+    fig.add_trace(go.Scatter(
+        x=x_range,
+        y=kde_values,
+        mode='lines',
+        line=dict(color='royalblue', width=3),
+        name='KDE'
+    ), row=1, col=1)
+
+    # Mean, median, CI
+    for val, label, style in [
+        (mean_val, f"Mean: {mean_val:.4f}", 'solid'),
+        (median_val, f"Median: {median_val:.4f}", 'dash'),
+        (ci_lower, f"95% CI Lower", 'dot'),
+        (ci_upper, f"95% CI Upper", 'dot')
+    ]:
+        fig.add_trace(go.Scatter(
+            x=[val, val],
+            y=[0, max(kde_values) * 1.05],
+            mode='lines',
+            name=label,
+            line=dict(color='gray', dash=style, width=2),
+            hoverinfo='name'
+        ), row=1, col=1)
+
+    # Boxplot
+    fig.add_trace(go.Box(
+        x=spread_data,
+        boxpoints='outliers',
+        marker_color='royalblue',
+        name='Boxplot',
+        boxmean='sd'
+    ), row=2, col=1)
+
+    # Layout
+    fig.update_layout(
+        title=dict(text="Spread Distribution", x=0.5, font_size=20),
+        height=700,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(t=80, l=40, r=40, b=60),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+    )
+
+    fig.update_xaxes(
+        title_text="Spread Value",
+        showgrid=True,
+        gridcolor='rgba(200,200,200,0.2)',
+        zeroline=False
+    )
+    fig.update_yaxes(
+        title_text="Density",
+        showgrid=True,
+        gridcolor='rgba(200,200,200,0.2)',
+        zeroline=False,
+        row=1, col=1
+    )
+    fig.update_yaxes(visible=False, row=2, col=1)
+
+    # Streamlit display
+    st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("📊 Distribution Stats"):
+        st.metric("Mean", f"{mean_val:.4f}")
+        st.metric("Median", f"{median_val:.4f}")
+        st.metric("Std Dev", f"{std_dev:.4f}")
+        st.metric("95% CI", f"[{ci_lower:.4f}, {ci_upper:.4f}]")
+

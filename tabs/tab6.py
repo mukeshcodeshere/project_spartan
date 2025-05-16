@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from data_engineering_tab5 import generate_instrument_lists, check_instrument_expiry_month_only, check_month_status,concatenate_commodity_data_for_unique_instruments_mini,plot_spread_seasonality
+from data_engineering_tab5 import generate_instrument_lists, check_instrument_expiry_month_only, check_month_status,concatenate_commodity_data_for_unique_instruments_mini,plot_spread_seasonality,plot_kde_distribution
 
 # Month character code mapping
 month_code_map = {
@@ -33,9 +33,23 @@ def render_tab6(list_of_input_instruments):
         selected_root = st.selectbox("Choose Root Symbol:", root_symbols, key="root_symbol")
     
     with st.expander("Select Months for Comparison", expanded=True):
-        selected_base_month = st.selectbox("Select Base Month Code:", list(month_code_map.keys()), key="base_month")
-        selected_comparison_month = st.selectbox("Select Comparison Month Code:", list(month_code_map.keys()), key="comparison_month")
-        
+        # Select base month
+        selected_base_month = st.selectbox(
+            "Select Base Month Code:", 
+            list(month_code_map.keys()), 
+            key="base_month"
+        )
+
+        # Create a new list excluding the selected base month
+        comparison_month_options = [month for month in month_code_map.keys() if month != selected_base_month]
+
+        # Select comparison month from the filtered list
+        selected_comparison_month = st.selectbox(
+            "Select Comparison Month Code:", 
+            comparison_month_options, 
+            key="comparison_month"
+        )
+
         # Adding expiry status for each month from month_status_dict
         base_expiry_status = month_status_dict.get(selected_base_month, "Unknown")        
         # Determine the base year
@@ -105,6 +119,9 @@ def render_tab6(list_of_input_instruments):
             # Example base_month_int = 5 (May), or whatever user selected earlier
             base_month_int = month_code_map[selected_base_month]
             plot_spread_seasonality(df_final, base_month_int,current_year)
+
+            # Plot KDE Distribution of Spread
+            plot_kde_distribution(df_final)
 
             # DataFrame preview
             with st.expander("📊 Preview Spread Data",expanded=False):

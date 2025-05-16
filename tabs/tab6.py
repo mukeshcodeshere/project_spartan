@@ -31,6 +31,10 @@ def render_tab6(list_of_input_instruments):
     # Use expanders to organize sections and reduce clutter
     with st.expander("Select Root Symbol", expanded=True):
         selected_root = st.selectbox("Choose Root Symbol:", root_symbols, key="root_symbol")
+        custom_root = st.text_input("Or enter a custom root symbol:", key="custom_root").strip()
+
+    # Final root selection logic
+    selected_root = custom_root if custom_root else selected_root
     
     with st.expander("Select Months for Comparison", expanded=True):
         # Select base month

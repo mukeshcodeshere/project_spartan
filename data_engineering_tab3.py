@@ -3,6 +3,7 @@ from datetime import datetime
 from gcc_sparta_lib import get_mv_data
 from datetime import datetime, timedelta
 import streamlit as st
+import time
 # Today's date
 end_date = datetime.today()
 
@@ -101,20 +102,55 @@ def generate_instrument_lists(instrument_expiry_check):
 
     return new_instrument_lists,unique_instruments
 
+# @st.cache_data
+# def concatenate_commodity_data_for_unique_instruments(unique_instruments):
+#     # Create an empty DataFrame to store the final results
+#     df_final = pd.DataFrame()
+
+#     # Loop through each unique instrument and fetch its commodity data
+#     for instrument in unique_instruments:
+#         # Fetch the commodity data for the current instrument
+#         df_commodity_data = get_mv_data(instrument,start_date,end_date,False)
+
+#         # Add a column for the instrument symbol
+#         df_commodity_data['Instrument'] = instrument
+
+#         # Concatenate this instrument's data to the final DataFrame
+#         df_final = pd.concat([df_final, df_commodity_data], ignore_index=True)
+
+#     return df_final
+
 @st.cache_data
-def concatenate_commodity_data_for_unique_instruments(unique_instruments):
-    # Create an empty DataFrame to store the final results
-    df_final = pd.DataFrame()
+def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=5, retry_delay=5):
+    fetched_data = []
+    failed_instruments = []
 
-    # Loop through each unique instrument and fetch its commodity data
     for instrument in unique_instruments:
-        # Fetch the commodity data for the current instrument
-        df_commodity_data = get_mv_data(instrument,start_date,end_date,False)
+        success = False
+        for attempt in range(1, max_retries + 1):
+            try:
+                with st.spinner(f"Attempt {attempt}/{max_retries} - Fetching data for {instrument}..."):
+                    df_commodity_data = get_mv_data(instrument, start_date, end_date, False)
 
-        # Add a column for the instrument symbol
-        df_commodity_data['Instrument'] = instrument
+                if df_commodity_data is not None and not df_commodity_data.empty:
+                    df_commodity_data['Instrument'] = instrument
+                    fetched_data.append(df_commodity_data)
+                    success = True
+                    break  # Exit retry loop on success
+                else:
+                    st.warning(f"⚠️ No data returned for {instrument} on attempt {attempt}. Retrying...")
+            except Exception as e:
+                st.error(f"❌ Error on attempt {attempt} for {instrument}: {e}")
+            
+            time.sleep(retry_delay)  # Delay before next attempt
 
-        # Concatenate this instrument's data to the final DataFrame
-        df_final = pd.concat([df_final, df_commodity_data], ignore_index=True)
+        if not success:
+            failed_instruments.append(instrument)
 
+    if failed_instruments:
+        st.error(f"❌ Failed to fetch data for the following instruments after {max_retries} attempts: {', '.join(failed_instruments)}")
+    else:
+        st.success("✅ All instruments fetched successfully.")
+
+    df_final = pd.concat(fetched_data, ignore_index=True) if fetched_data else pd.DataFrame()
     return df_final

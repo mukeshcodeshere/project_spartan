@@ -31,7 +31,8 @@ def render_tab3(merged_data, instruments, meta_A_month_int,list_of_input_instrum
     # Generate the new instrument lists based on expiry check
     new_instrument_lists,unique_instruments = generate_instrument_lists(instrument_expiry_check)
     st.write(unique_instruments)
-    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments)
+    df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments, max_retries=5, retry_delay=5)
+    #df_final = concatenate_commodity_data_for_unique_instruments(unique_instruments)
     st.write(df_final)
     st.write("=======================================")
 

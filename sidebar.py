@@ -30,19 +30,37 @@ def show_sidebar(commodity_categories):
 
         if input_mode == "Preset":
             st.markdown("### 📚 Presets")
+
             groups = sorted(set(p['group'] for p in presets))
             selected_group = st.selectbox("Select Group", groups)
+
             filtered_by_group = [p for p in presets if p['group'] == selected_group]
+
             regions = sorted(set(p['region'] for p in filtered_by_group))
             selected_region = st.selectbox("Select Region", regions)
+
             filtered_by_region = [p for p in filtered_by_group if p['region'] == selected_region]
+
+            # Extract and format month codes
             month_codes = sorted(set(p['months_code'] for p in filtered_by_region))
-            month_display = {code: f"Contract: {code}" for code in month_codes}
-            selected_month_code = st.selectbox("Select Contract Month-Month", options=month_codes, format_func=lambda x: month_display[x])
+            month_codes_clean = [str(code) for code in month_codes if code]
+            month_display = {code: f"Contract: {code}" for code in month_codes_clean}
+
+            selected_month_code = st.selectbox(
+                "Select Contract Month-Month",
+                options=month_codes_clean,
+                format_func=lambda x: month_display.get(x, x)
+            )
+
+            # Filter presets based on selected month
             filtered_by_month = [p for p in filtered_by_region if p['months_code'] == selected_month_code]
+
+            # Spread selection
             descriptions = [p['description'] for p in filtered_by_month]
             selected_desc = st.selectbox("Select Spread", descriptions)
-            selected_preset = next((p['description'] for p in filtered_by_month if p['description'] == selected_desc), None)
+
+            # 💥 FIXED: Select full preset, not just description
+            selected_preset = next((p for p in filtered_by_month if p['description'] == selected_desc), None)
 
             st.markdown("### 📅 Date Range")
             col1, col2 = st.columns(2)

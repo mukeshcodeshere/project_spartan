@@ -125,7 +125,7 @@ group_A, group_B, start_date, end_date, rolling_window, var_confidence, chart_he
 # Add logic to handle presets
 if selected_preset:
     # Find the selected preset data
-    preset = next(p for p in presets if p['description'] == selected_preset)
+    preset = selected_preset
 
     # Clear existing groups
     group_A.clear()

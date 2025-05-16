@@ -28,7 +28,6 @@ month_code_map = {
 
 # Get the current month
 current_month = datetime.now().month
-print(f"Current month: {current_month}")  # Debugging: Show the current month
 
 # Function to check if an instrument has expired
 def check_instrument_expiry(instruments):
@@ -107,7 +106,12 @@ def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_re
     fetched_data = []
     failed_instruments = []
 
-    for instrument in unique_instruments:
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+
+    total_instruments = len(unique_instruments)
+
+    for idx, instrument in enumerate(unique_instruments, start=1):
         success = False
         for attempt in range(1, max_retries + 1):
             try:
@@ -118,16 +122,21 @@ def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_re
                     df_commodity_data['Instrument'] = instrument
                     fetched_data.append(df_commodity_data)
                     success = True
-                    break  # Exit retry loop on success
+                    break
                 else:
                     st.warning(f"⚠️ No data returned for {instrument} on attempt {attempt}. Retrying...")
             except Exception as e:
                 st.error(f"❌ Error on attempt {attempt} for {instrument}: {e}")
             
-            time.sleep(retry_delay)  # Delay before next attempt
+            time.sleep(retry_delay)
 
         if not success:
             failed_instruments.append(instrument)
+
+        # Update progress bar
+        progress = idx / total_instruments
+        progress_bar.progress(progress)
+        status_text.text(f"Processed {idx}/{total_instruments} instruments")
 
     if failed_instruments:
         st.error(f"❌ Failed to fetch data for the following instruments after {max_retries} attempts: {', '.join(failed_instruments)}")

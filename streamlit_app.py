@@ -12,6 +12,7 @@ from tabs.tab1 import render_tab1
 from tabs.tab2 import render_tab2
 from tabs.tab3 import render_tab3
 from tabs.tab4 import render_tab4
+from tabs.tab5 import render_tab5
 from sidebar import show_sidebar, COLORS
 from data_engineering import process_commodities_data,load_commodity_data
 

@@ -14,8 +14,8 @@ month_code_map = {
 current_month = datetime.now().month
 
 def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instruments):
-    st.markdown('<div class="section-header">📈 Seasonal Pattern Analysis (252 Trading Days per Year)</div>', unsafe_allow_html=True)
-    st.info("⏳ Aligns trading day number within each year for seasonal comparison. No averaging or aggregation applied.")
+    st.markdown('<div class="section-header"> Seasonal Pattern Analysis </div>', unsafe_allow_html=True)
+    st.info("⏳ Please wait a few minutes while we load all the instruments.")
 
     # 1. Expiry status check
     instrument_expiry_check = check_instrument_expiry_month_only(list_of_input_instruments)
@@ -63,9 +63,12 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
         .cumcount() + 1
     )
 
-    # Optional DataFrame preview
+    # DataFrame preview
     with st.expander("📊 Preview Filtered Data"):
         st.dataframe(df_filtered)
+    
+    print(df_filtered.head())
+    print(df_filtered.tail())
 
     # 7. Plotting (preserve existing logic but prioritize valid)
     plot_seasonality_chart_tab5(df_filtered, meta_A_month_int)

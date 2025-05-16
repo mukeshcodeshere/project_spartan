@@ -177,13 +177,13 @@ def check_instrument_expiry_dict(instruments):
         else:
             instrument_status.append((instrument, "valid"))
     
-    # Debugging: Print the expiry status mapping for verification
-    print(f"Expiry Status Dictionary: {instrument_status}")
-    
     return instrument_status
 
 def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
     import plotly.graph_objects as go
+    import pandas as pd
+    import streamlit as st
+    import itertools
 
     df_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
     df_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
@@ -192,35 +192,57 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
     month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-    # === Plot expired ===
+    # Generate unique colors for each instrument
+    color_palette = itertools.cycle([
+        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+        "#bcbd22", "#17becf"
+    ])
+    instrument_colors = {instrument: next(color_palette) for instrument in df_filtered['Instrument'].unique()}
+
+    # === Plot expired instruments ===
     for (instrument, year), group in df_expired.groupby(['Instrument', 'Year']):
         group = group.sort_values('TradingDayOfYear').tail(252).reset_index(drop=True)
-        group['trading_day_index'] = range(len(group))
+        group = group.copy()
+        group.loc[:, 'trading_day_index'] = range(len(group))
         fig.add_trace(go.Scatter(
             x=group['trading_day_index'],
             y=group['Close'],
             mode='lines',
             name=f"{instrument} - {year} (Expired)",
-            line=dict(dash='dot')
+            line=dict(dash='dash', width=2, color=instrument_colors[instrument]),
+            opacity=0.7
         ))
 
-    # === Plot valid ===
-    current_year = df_valid['Date'].dt.year.max()
-    start_date = pd.Timestamp(year=current_year, month=meta_A_month_int, day=1)
+    # === Plot valid instruments ===
+    if df_valid.empty:
+        st.write("No valid instruments found.")
+        return
+
+    max_valid_date = df_valid['Date'].max()
+    start_year = max_valid_date.year
+    start_date = pd.Timestamp(year=start_year, month=meta_A_month_int, day=1)
 
     def date_to_trading_index(date, start):
-        return (date - start).days * 5 / 7  # approx
+        days_diff = (date - start).days
+        trading_index = days_diff * 5 / 7
+        return trading_index
 
-    for (instrument, year), group in df_valid[df_valid['Date'] >= start_date].groupby(['Instrument', 'Year']):
-        group = group.sort_values('Date')
-        group['trading_day_index'] = group['Date'].apply(lambda d: date_to_trading_index(d, start_date))
-        fig.add_trace(go.Scatter(
-            x=group['trading_day_index'],
-            y=group['Close'],
-            mode='lines',
-            name=f"{instrument} - {year} (Valid)",
-            line=dict(dash='solid')
-        ))
+    valid_data = df_valid[df_valid['Date'] >= start_date].copy()
+    if valid_data.empty:
+        st.write("No valid data after adjusted start date.")
+    else:
+        for (instrument, year), group in valid_data.groupby(['Instrument', 'Year']):
+            group = group.sort_values('Date').copy()
+            group.loc[:, 'trading_day_index'] = group['Date'].apply(lambda d: date_to_trading_index(d, start_date))
+            fig.add_trace(go.Scatter(
+                x=group['trading_day_index'],
+                y=group['Close'],
+                mode='lines',
+                name=f"{instrument} - {year} (Valid)",
+                line=dict(dash='solid', width=3, color=instrument_colors[instrument]),
+                opacity=1
+            ))
 
     # Month ticks
     month_positions = [i * 21 for i in range(12)]
@@ -230,6 +252,9 @@ def plot_seasonality_chart_tab5(df_filtered, meta_A_month_int):
         title=f"📅 Seasonality Chart (Starting from {month_names[meta_A_month_int - 1]})",
         xaxis=dict(title="Month", tickvals=month_positions, ticktext=month_labels),
         yaxis_title="Close Price",
-        height=600
+        height=600,
+        template="plotly_white",
+        showlegend=True
     )
+
     st.plotly_chart(fig, use_container_width=True)

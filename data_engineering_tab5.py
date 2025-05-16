@@ -4,6 +4,7 @@ from gcc_sparta_lib import get_mv_data
 from datetime import datetime, timedelta
 import streamlit as st
 import time
+import plotly.graph_objects as go
 # Today's date
 end_date = datetime.today()
 
@@ -324,19 +325,15 @@ def check_month_status(month_code_map):
 
     return status_dict
 
-def plot_spread_seasonality(df_final, base_month_int):
-    import plotly.graph_objects as go
-    import pandas as pd
-    import streamlit as st
-
+def plot_spread_seasonality(df_final, base_month_int,current_year):
     # Ensure proper types
     df_final['Date'] = pd.to_datetime(df_final['Date'])
 
     # Extract year from Base_Instrument (last 2 digits)
     df_final['Year'] = df_final['Base_Instrument'].str.extract(r'(\d{2})$').astype(int) + 2000
 
-    # Sort for safety
-    df_final = df_final.sort_values(['Year', 'Date']).copy()
+    # Sort in descending order by Year and Date to get the most recent data first
+    df_final = df_final.sort_values(['Year', 'Date'], ascending=[False, False]).copy()
 
     # Compute trading day index per year (1 to 252 max)
     df_final['TradingDayOfYear'] = (
@@ -344,19 +341,37 @@ def plot_spread_seasonality(df_final, base_month_int):
         .cumcount() + 1
     )
 
-    # Trim to max 252 trading days (1 year)
-    df_final = df_final[df_final['TradingDayOfYear'] <= 252]
+    # Get the latest year
+    latest_year = df_final['Year'].max()
+    start_date_for_latest_year = pd.to_datetime(f"{latest_year-1}-{base_month_int:02d}-01")
+    # if latest_year > current_year:
+    #     # Filter data for the latest year to only include dates starting from the 1st day of base_month_int
+    #     start_date_for_latest_year = pd.to_datetime(f"{latest_year-1}-{base_month_int:02d}-01")
+    # else:
+    #     start_date_for_latest_year = pd.to_datetime(f"{latest_year-1}-{base_month_int:02d}-01")
+    df_final.loc[df_final['Year'] == latest_year, 'Date'] = df_final['Date'].where(df_final['Date'] >= start_date_for_latest_year)
+
+    # After applying the date filter, we remove rows with NaT (Not a Time) for the latest year
+    df_final = df_final.dropna(subset=['Date'])
+
+    # Select the latest 252 trading days for each year
+    df_final = df_final.groupby('Year').head(252)
 
     # Plot
     fig = go.Figure()
 
     for year, group in df_final.groupby('Year'):
+        # Check if the year is the latest one, and bold it in the legend and graph
+        year_label = f"<b>{year}</b>" if year == latest_year else str(year)
+        
+        line_style = dict(width=4, dash='solid') if year == latest_year else dict(width=2, dash='dot')
+        
         fig.add_trace(go.Scatter(
             x=group['TradingDayOfYear'],
             y=group['Spread'],
             mode='lines',
-            name=str(year),
-            line=dict(width=2),
+            name=year_label,
+            line=line_style,
             hovertext=group['Date'].dt.strftime('%Y-%m-%d'),
             opacity=0.85
         ))

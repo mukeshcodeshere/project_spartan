@@ -104,10 +104,10 @@ def render_tab6(list_of_input_instruments):
 
             # Example base_month_int = 5 (May), or whatever user selected earlier
             base_month_int = month_code_map[selected_base_month]
-            plot_spread_seasonality(df_final, base_month_int)
+            plot_spread_seasonality(df_final, base_month_int,current_year)
 
             # DataFrame preview
-            with st.expander("📊 Preview Spread Data"):
+            with st.expander("📊 Preview Spread Data",expanded=False):
                 st.dataframe(df_final)
 
         else:

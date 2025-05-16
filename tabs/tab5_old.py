@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-from data_engineering_tab5 import generate_instrument_lists,concatenate_commodity_data_for_unique_instruments,check_instrument_expiry_month_only,check_instrument_expiry_dict
+from data_engineering_tab5 import generate_instrument_lists,concatenate_commodity_data_for_unique_instruments,check_instrument_expiry_dict
 
 # Month character code mapping
 month_code_map = {
@@ -20,7 +20,7 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
     st.info("⏳ Aligns trading day number within each year for seasonal comparison. No averaging or aggregation applied.")
 
     # Step 1: Prepare instruments and data
-    instrument_expiry_check = check_instrument_expiry_month_only(list_of_input_instruments)
+    instrument_expiry_check = check_instrument_expiry_dict(list_of_input_instruments)
     expiry_status_dict = {inst: status for inst, status in instrument_expiry_check}
 
     new_instrument_lists, unique_instruments = generate_instrument_lists(instrument_expiry_check)
@@ -48,32 +48,21 @@ def render_tab5(merged_data, instruments, meta_A_month_int, list_of_input_instru
         .groupby(['Instrument', 'Year'])
         .cumcount() + 1
     )
-    instrument_expiry_check_full = check_instrument_expiry_dict(unique_instruments)
-    expiry_status_dict = {inst: status for inst, status in instrument_expiry_check_full}
+
     # Add expiry status to each row
     df_filtered['ExpiryStatus'] = df_filtered['Instrument'].map(expiry_status_dict)
-
-    # Handle the merged data
-    if not df_filtered.empty:
-        st.info("Filtered is available for analysis.")
-        with st.expander("Click to view filtered data", expanded=False):
-            st.dataframe(df_filtered)
-    else:
-        st.warning("No data available for the selected commodities.")
 
     # Apply different filters for non-expired and expired items
     #first logic for only expired things
     df_filtered_expired = df_filtered[df_filtered['ExpiryStatus'] == 'expired']
     df_filtered_valid = df_filtered[df_filtered['ExpiryStatus'] == 'valid']
-
-    ##########################################################
-    df_valid = df_filtered_expired
+    
     # Create Instrument-Year label
-    df_valid['Instrument_Year'] = df_valid['Instrument'].astype(str) + " - " + df_valid['Year'].astype(str)
+    df_filtered['Instrument_Year'] = df_filtered['Instrument'].astype(str) + " - " + df_filtered['Year'].astype(str)
 
     # Plotting
     fig = go.Figure()
-    for label, group in df_valid.groupby('Instrument_Year'):
+    for label, group in df_filtered.groupby('Instrument_Year'):
         expiry_status = group['ExpiryStatus'].iloc[0]
         line_style = 'dash' if expiry_status == 'valid' else 'solid'
 

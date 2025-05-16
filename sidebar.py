@@ -66,7 +66,8 @@ def show_sidebar(commodity_categories):
 
         else:
             st.markdown("### 🔍 Select Instruments (Optional)")
-            def select_multiple_commodities(group_name):
+
+            def select_multiple_commodities(group_name, default_weight):
                 with st.expander(f"⚙️ Configure {group_name}", expanded=False):
                     category = st.selectbox(
                         f"{group_name}: Exchange / Group",
@@ -91,9 +92,15 @@ def show_sidebar(commodity_categories):
                                 with cols[0]:
                                     st.markdown(f"**{desc} ({symbol})**")
                                 with cols[1]:
-                                    weight = st.number_input("Weight", min_value=-10.0, value=1.0, step=0.1, key=f"{group_name}_{symbol}_weight")
+                                    weight = st.number_input(
+                                        "Weight", min_value=-10.0, value=default_weight, step=0.1,
+                                        key=f"{group_name}_{symbol}_weight"
+                                    )
                                 with cols[2]:
-                                    conversion = st.number_input("Conversion", min_value=-10.0, value=1.0, step=0.1, key=f"{group_name}_{symbol}_conversion")
+                                    conversion = st.number_input(
+                                        "Conversion", min_value=-10.0, value=1.0, step=0.1,
+                                        key=f"{group_name}_{symbol}_conversion"
+                                    )
                                 group.append({
                                     "label": full_label,
                                     "symbol": symbol,
@@ -102,8 +109,8 @@ def show_sidebar(commodity_categories):
                                 })
                     return group
 
-            group_A = select_multiple_commodities("Group A")
-            group_B = select_multiple_commodities("Group B")
+            group_A = select_multiple_commodities("Group A", default_weight=1.0)
+            group_B = select_multiple_commodities("Group B", default_weight=-1.0)
 
             st.markdown("### 🧾 Add Instruments via Table")
             st.info("Add instruments below. Use the 'Group' column to assign to Group A or B. Delete rows to remove.")
@@ -124,14 +131,21 @@ def show_sidebar(commodity_categories):
                 if pd.isna(instrument_df.at[idx, "Symbol"]):
                     continue
                 symbol = str(instrument_df.at[idx, "Symbol"])
-                weight = float(instrument_df.at[idx, "Weight"])
-                conversion = float(instrument_df.at[idx, "Conversion"])
                 group = instrument_df.at[idx, "Group"]
+
+                weight = instrument_df.at[idx, "Weight"]
+                if pd.isna(weight):
+                    weight = 1.0 if group == "Group A" else -1.0
+
+                conversion = instrument_df.at[idx, "Conversion"]
+                if pd.isna(conversion):
+                    conversion = 1.0
+
                 entry = {
                     "label": f"[Manual] {symbol}",
                     "symbol": symbol,
-                    "weight": weight,
-                    "conversion": conversion
+                    "weight": float(weight),
+                    "conversion": float(conversion)
                 }
                 if group == "Group A":
                     group_A.append(entry)

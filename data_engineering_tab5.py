@@ -28,9 +28,10 @@ month_code_map = {
 
 # Get the current month
 current_month = datetime.now().month
+current_year = datetime.now().year
 
 # Function to check if an instrument has expired
-def check_instrument_expiry(instruments):
+def check_instrument_expiry_month_only(instruments):
     expired_instruments = []
 
     for instrument in instruments:
@@ -145,3 +146,38 @@ def concatenate_commodity_data_for_unique_instruments(unique_instruments, max_re
 
     df_final = pd.concat(fetched_data, ignore_index=True) if fetched_data else pd.DataFrame()
     return df_final
+
+def check_instrument_expiry_dict(instruments):
+    instrument_status = []
+    
+    # Get the current year and month for comparison
+    current_date = datetime.now()
+    current_year = current_date.year
+    current_month = current_date.month
+
+    for instrument in instruments:
+        if len(instrument) < 4:
+            instrument_status.append((instrument, "invalid"))  # Short instruments are invalid
+            continue
+        
+        # Extract the last two digits of the year and convert them to a full year
+        instrument_year = 2000 + int(instrument[-2:])
+        
+        # Extract the month character and map it to a month number
+        month_char = instrument[-3]
+        instrument_month = month_code_map.get(month_char, None)
+
+        if instrument_month is None:
+            instrument_status.append((instrument, "invalid month"))
+            continue
+        
+        # Determine if the instrument is expired or valid
+        if (instrument_year < current_year) or (instrument_year == current_year and instrument_month < current_month):
+            instrument_status.append((instrument, "expired"))
+        else:
+            instrument_status.append((instrument, "valid"))
+    
+    # Debugging: Print the expiry status mapping for verification
+    print(f"Expiry Status Dictionary: {instrument_status}")
+    
+    return instrument_status
